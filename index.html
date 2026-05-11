@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Zombie Waves 3D</title>
+  <title>Zombie Test Map</title>
   <style>
     html, body {
       margin: 0;
@@ -39,7 +39,6 @@
       align-items: center;
       justify-content: center;
       touch-action: manipulation;
-      z-index: 20;
     }
     #jumpBtn {
       bottom: 30px;
@@ -81,12 +80,10 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <div class="hud" id="hud">HEALTH: 100</div>
+  <div class="hud" id="hud">HEALTH: 100<br>KILLS: 0</div>
 
   <!-- Joystick -->
-  <div id="stickBase">
-    <div id="stickKnob"></div>
-  </div>
+  <div id="stickBase"><div id="stickKnob"></div></div>
 
   <!-- Buttons -->
   <button id="hitBtn" class="touchBtn">HIT</button>
@@ -96,7 +93,7 @@
   <script>
     // Game state
     let scene, camera, renderer;
-    let player, zombies = [], rocks = [];
+    let player, zombies = [], house, car, road;
     const game = {
       health: 100,
       kills: 0,
@@ -106,14 +103,11 @@
     };
 
     function updateHUD() {
-      document.getElementById("hud").innerHTML = `
-        HEALTH: ${game.health}<br>
-        KILLS: ${game.kills}
-      `;
+      document.getElementById("hud").innerHTML = `HEALTH: ${game.health}<br>KILLS: ${game.kills}`;
     }
 
-    // --- CREATE MAP (GROUND + ROCKS) ---
-    function createMap() {
+    // --- CREATE MAP: ROAD, HOUSE, CAR ---
+    function createTestMap() {
       // Ground
       const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(100, 100),
@@ -122,41 +116,86 @@
       ground.rotation.x = -Math.PI / 2;
       scene.add(ground);
 
-      // Random rocks (blocky 3D rocks)
-      const rockMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
-      for (let i = 0; i < 20; i++) {
-        const x = (Math.random() - 0.5) * 80;
-        const z = (Math.random() - 0.5) * 80;
-        const size = 1.5 + Math.random() * 0.8;
+      // Road (long rectangle)
+      const road = new THREE.Mesh(
+        new THREE.BoxGeometry(100, 0.1, 10),
+        new THREE.MeshLambertMaterial({ color: 0x333333 })
+      );
+      road.position.y = 0.01;
+      road.position.z = -15;
+      scene.add(road);
 
-        const rock = new THREE.Mesh(
-          new THREE.BoxGeometry(size, size * 0.7, size),
-          rockMat
+      // House
+      const house = new THREE.Group();
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 4, 10),
+        new THREE.MeshLambertMaterial({ color: 0xa0a0ff })
+      );
+      base.position.y = 2;
+      const roof = new THREE.Mesh(
+        new THREE.ConeGeometry(7, 3, 4),
+        new THREE.MeshLambertMaterial({ color: 0xff9999 })
+      );
+      roof.position.y = 5.5;
+      house.add(base, roof);
+      house.position.set(18, 0, -10);
+      scene.add(house);
+
+      // Car
+      const car = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 1, 2),
+        new THREE.MeshLambertMaterial({ color: 0x5555ff })
+      );
+      const wheelMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+      const wheels = [];
+      for (let i = 0; i < 4; i++) {
+        const w = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.4, 0.4, 0.8, 12),
+          wheelMat
         );
-        rock.position.set(x, rock.geometry.parameters.height / 2, z);
-        rock.rotation.y = Math.random() * Math.PI;
-        scene.add(rock);
-        rocks.push(rock);
+        w.rotation.z = Math.PI / 2;
+        wheels.push(w);
+        car.add(w);
       }
+      wheels[0].position.set(-1.4, -0.5, -1.1);
+      wheels[1].position.set(1.4, -0.5, -1.1);
+      wheels[2].position.set(-1.4, -0.5, 1.1);
+      wheels[3].position.set(1.4, -0.5, 1.1);
+      car.add(body);
+      car.position.set(0, 0.5, -15);
+      scene.add(car);
+
+      // Store for later use (optional)
+      window.testEntities = { road, house, car };
     }
 
-    // --- ZOMBIES (ALSO CREATED BY CODE) ---
+    // --- ZOMBIES ---
     function createZombies() {
       const zMat = new THREE.MeshLambertMaterial({ color: 0x55aa55 });
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 8; i++) {
         const z = new THREE.Mesh(
           new THREE.BoxGeometry(1, 2, 1),
           zMat
         );
-        const r = 20;
-        z.position.set(
-          (Math.random() - 0.5) * 2 * r,
-          1,
-          (Math.random() - 0.5) * 2 * r
-        );
+        z.position.x = (Math.random() - 0.5) * 40;
+        z.position.z = (Math.random() - 0.5) * 40;
+        z.position.y = 1;
         scene.add(z);
         zombies.push(z);
       }
+    }
+
+    // --- PLAYER ---
+    function createPlayer() {
+      player = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2, 1),
+        new THREE.MeshLambertMaterial({ color: 0xff4444 })
+      );
+      player.position.y = 1;
+      player.position.x = 0;
+      player.position.z = 10;
+      scene.add(player);
     }
 
     // --- JOYSTICK & BUTTONS ---
@@ -205,45 +244,15 @@
       if (!game.isJumping) game.isJumping = true;
     });
 
-    // --- PLAYER ---
-    function createPlayer() {
-      player = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 2, 1),
-        new THREE.MeshLambertMaterial({ color: 0xff4444 })
-      );
-      player.position.y = 1;
-      scene.add(player);
-    }
-
     function updatePlayer() {
       const speed = 0.22;
       const dx = game.move.x * speed;
       const dz = game.move.y * speed;
 
-      // Check collision with rocks (very simple: stay in same position if it would overlap)
-      const nextX = player.position.x + dx;
-      const nextZ = player.position.z + dz;
-      let canMoveX = true, canMoveZ = true;
+      // Simple walls / keep in scene
+      if (Math.abs(player.position.x + dx) < 40) player.position.x += dx;
+      if (Math.abs(player.position.z + dz) < 40) player.position.z += dz;
 
-      for (let rock of rocks) {
-        const d = Math.hypot(
-          rock.position.x - nextX,
-          rock.position.z - nextZ
-        );
-        if (d < 2) {
-          if (Math.abs(rock.position.x - player.position.x) < Math.abs(rock.position.z - player.position.z)) {
-            canMoveX = false;
-          } else {
-            canMoveZ = false;
-          }
-          break;
-        }
-      }
-
-      if (canMoveX) player.position.x = nextX;
-      if (canMoveZ) player.position.z = nextZ;
-
-      // Jump
       if (game.isJumping) {
         player.position.y = Math.min(player.position.y + 0.18, 1.8);
         if (player.position.y >= 1.7) game.isJumping = false;
@@ -266,14 +275,13 @@
         }
       }
 
-      // Keep camera on player
-      camera.position.copy(player.position);
+      camera.position.x = player.position.x;
       camera.position.y = 5;
-      camera.position.z = 10;
+      camera.position.z = player.position.z + 10;
       camera.lookAt(player.position);
     }
 
-    // --- INIT THREE.JS + RUN ---
+    // --- INIT THREE.JS ---
     function init() {
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x7ec8ff);
@@ -302,12 +310,12 @@
       scene.add(sun);
       scene.add(new THREE.AmbientLight(0x8fb3ff, 0.4));
 
-      createMap();
+      createTestMap();
       createPlayer();
       createZombies();
 
-      animate();
       updateHUD();
+      animate();
     }
 
     function animate() {
