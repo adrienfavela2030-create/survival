@@ -12,18 +12,11 @@
       overflow: hidden;
       background: #1d3b5c;
       touch-action: none;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
     }
     #gameCanvas {
       display: block;
       width: 100vw;
       height: 100vh;
-      image-rendering: pixelated;
     }
     .hud {
       position: absolute;
@@ -47,9 +40,6 @@
       align-items: center;
       justify-content: center;
       touch-action: manipulation;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
       z-index: 20;
     }
     #jumpBtn {
@@ -77,9 +67,6 @@
       background: rgba(255,255,255,.2);
       border: 4px solid rgba(0,0,0,.35);
       touch-action: none;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
     }
     #stickKnob {
       position: absolute;
@@ -114,27 +101,25 @@
   </style>
 </head>
 <body>
-  <!-- HOME MENU -->
   <div id="menuScreen">
     <div>ZOMBIE FOREST NIGHTS</div>
     <button id="btnStart">Start Night 1</button>
   </div>
 
-  anvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas"></canvas>
   <div class="hud" id="hud">HEALTH: 100</div>
 
-  <!-- Joystick -->
   <div id="stickBase"><div id="stickKnob"></div></div>
-
-  <!-- Buttons -->
   <button id="hitBtn" class="touchBtn">HIT</button>
   <button id="jumpBtn" class="touchBtn">JUMP</button>
 
-  <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/zombie.js"></script>
+
   <script>
-    // Game state
-    let game = {
+    // Game state (global)
+    window.game = {
       isDay: true,
       night: 1,
       maxNights: 10,
@@ -148,301 +133,28 @@
       isJumping: false
     };
 
-    let scene, camera, renderer, sticksTracking = false;
-    let player, zombies = [], trees = [], bushes = [], houses = [], parkObjects = [], safeZone;
-
     function updateHUD() {
       const hud = document.getElementById("hud");
       hud.innerHTML = `
-        NIGHT: ${game.isDay ? "DAY" : game.night}
-        HEALTH: ${game.health} / ${game.maxHealth}
-        HEARTS: ${game.hearts}
-        COINS: ${game.coins}
+        NIGHT: ${window.game.isDay ? "DAY" : window.game.night}
+        HEALTH: ${window.game.health} / ${window.game.maxHealth}
+        HEARTS: ${window.game.hearts}
+        COINS: ${window.game.coins}
       `;
     }
 
-    // --- CREATE MAP: FOREST + HOUSE + PARK + SAFE ZONE ---
-    function createMap() {
-      // Scene + lighting
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x7ec8ff);
-      scene.fog = new THREE.Fog(0x7ec8ff, 50, 220);
-
-      const fov = 75;
-      const aspect = window.innerWidth / window.innerHeight;
-      camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 1000);
-
-      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gameCanvas"), antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-
-      window.addEventListener("resize", () => {
-        const w = window.innerWidth, h = window.innerHeight;
-        renderer.setSize(w, h);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-      });
-
-      const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-      sun.position.set(10, 20, 8);
-      const ambient = new THREE.AmbientLight(0x8fb3ff, 0.4);
-      scene.add(sun, ambient);
-
-      // Ground
-      const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(400, 400),
-        new THREE.MeshLambertMaterial({ color: 0x008800 })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      scene.add(ground);
-
-      // Trees
-      const treeMat = new THREE.MeshLambertMaterial({ color: 0x228822 });
-      for (let i = 0; i < 150; i++) {
-        const x = (Math.random() - 0.5) * 380;
-        const z = (Math.random() - 0.5) * 380;
-        const h = 4 + Math.random() * 3;
-
-        const trunk = new THREE.Mesh(
-          new THREE.BoxGeometry(0.6, h, 0.6),
-          new THREE.MeshLambertMaterial({ color: 0x8b5a2b })
-        );
-        trunk.position.y = h / 2;
-
-        const leaves = new THREE.Mesh(
-          new THREE.SphereGeometry(1.6, 8, 6),
-          treeMat
-        );
-        leaves.position.y = h + 1;
-
-        const tree = new THREE.Group();
-        tree.add(trunk, leaves);
-        tree.position.set(x, 0, z);
-        scene.add(tree);
-        trees.push(tree);
-      }
-
-      // Bushes
-      const bushMat = new THREE.MeshLambertMaterial({ color: 0x116611 });
-      for (let i = 0; i < 80; i++) {
-        const x = (Math.random() - 0.5) * 380;
-        const z = (Math.random() - 0.5) * 380;
-        const b = new THREE.Mesh(
-          new THREE.SphereGeometry(0.6, 6, 5),
-          bushMat
-        );
-        b.position.set(x, 0, z);
-        scene.add(b);
-        bushes.push(b);
-      }
-
-      // Safe zone (tent + campfire)
-      const tent = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 3, 4),
-        new THREE.MeshLambertMaterial({ color: 0xaa0000 })
-      );
-      tent.position.set(20, 1.5, 20);
-      scene.add(tent);
-
-      const fire = new THREE.Mesh(
-        new THREE.ConeGeometry(0.8, 1.2, 8),
-        new THREE.MeshLambertMaterial({ color: 0xff6600 })
-      );
-      fire.rotation.x = Math.PI;
-      fire.position.set(20, 0.6, 20);
-      scene.add(fire);
-
-      safeZone = { tent, fire };
-
-      // Park (abandoned slide + chest)
-      const slideBase = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 0.4, 0.8),
-        new THREE.MeshLambertMaterial({ color: 0x333333 })
-      );
-      slideBase.position.y = 0.2;
-
-      const slideSlide = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 0.2, 0.4),
-        new THREE.MeshLambertMaterial({ color: 0x555555 })
-      );
-      slideSlide.position.y = 0.6;
-      slideSlide.rotation.x = 0.25;
-
-      const slide = new THREE.Group();
-      slide.add(slideBase, slideSlide);
-      slide.position.set(-30, 0, -40);
-      scene.add(slide);
-      parkObjects.push(slide);
-
-      const chest = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 0.8, 0.8),
-        new THREE.MeshLambertMaterial({ color: 0xaa8844 })
-      );
-      chest.position.set(-30, 0.4, -38);
-      scene.add(chest);
-      parkObjects.push(chest);
-
-      // Abandoned house with furniture
-      const houseBase = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 4.5, 10),
-        new THREE.MeshLambertMaterial({ color: 0x666666 })
-      );
-      houseBase.position.y = 2.25;
-
-      const houseRoof = new THREE.Mesh(
-        new THREE.ConeGeometry(7.5, 3, 4),
-        new THREE.MeshLambertMaterial({ color: 0x333333 })
-      );
-      houseRoof.position.y = 5.5;
-
-      const house = new THREE.Group();
-      house.add(houseBase, houseRoof);
-      house.position.set(-20, 0, 40);
-      scene.add(house);
-      houses.push(house);
-
-      // Furniture
-      const carpet = new THREE.Mesh(
-        new THREE.BoxGeometry(6, 0.05, 6),
-        new THREE.MeshLambertMaterial({ color: 0xaa00aa })
-      );
-      carpet.position.set(-20, 0, 40);
-      scene.add(carpet);
-
-      const tv = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 0.6, 0.1),
-        new THREE.MeshLambertMaterial({ color: 0x222222 })
-      );
-      tv.position.set(-23, 2.3, 40);
-      scene.add(tv);
-
-      const bed = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 0.2, 2),
-        new THREE.MeshLambertMaterial({ color: 0x0000aa })
-      );
-      bed.position.set(-17, 0.3, 38);
-      scene.add(bed);
-
-      const couch = new THREE.Mesh(
-        new THREE.BoxGeometry(3, 0.4, 1.5),
-        new THREE.MeshLambertMaterial({ color: 0x880000 })
-      );
-      couch.position.set(-17, 0.3, 42);
-      scene.add(couch);
-
-      const table = new THREE.Mesh(
-        new THREE.BoxGeometry(1.5, 0.6, 1.5),
-        new THREE.MeshLambertMaterial({ color: 0xaa8844 })
-      );
-      table.position.set(-20, 0.6, 40);
-      scene.add(table);
-
-      // Player
-      player = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 2, 1),
-        new THREE.MeshLambertMaterial({ color: 0xff4444 })
-      );
-      player.position.set(0, 1, 10);
-      scene.add(player);
-
-      // Initial camera
-      camera.position.set(0, 5, 10);
-      camera.lookAt(player.position);
-    }
-
-    function createZombies() {
-      const n = 10 + (game.night - 1) * 2; // 10 on night 1, +2 each
-      for (let i = 0; i < n; i++) {
-        const x = (Math.random() - 0.5) * 300;
-        const z = (Math.random() - 0.5) * 300;
-        const zMesh = new THREE.Mesh(
-          new THREE.BoxGeometry(1, 2, 1),
-          new THREE.MeshLambertMaterial({ color: 0x55aa55 })
-        );
-        zMesh.position.set(x, 1, z);
-        zMesh.health = 20;
-        scene.add(zMesh);
-        zombies.push(zMesh);
-      }
-    }
-
-    function updateZombies() {
-      if (!game.isDay) {
-        const toRemove = [];
-        for (let z of zombies) {
-          const dir = new THREE.Vector3().subVectors(player.position, z.position).normalize();
-          z.position.addScaledVector(dir, 0.06);
-          const d = player.position.distanceTo(z.position);
-          if (d < 1.8) {
-            game.health = Math.max(0, game.health - 0.1);
-            if (game.health <= 0) {
-              // Game over logic can go here
-            }
-          }
-          if (z.health <= 0) {
-            scene.remove(z);
-            toRemove.push(z);
-          }
-        }
-        zombies = zombies.filter(z => !toRemove.includes(z));
-      }
-    }
-
-    // --- DAY / NIGHT CYCLE ---
-    function updateDayNight() {
-      const fog = scene.fog;
-      const sun = scene.children.find(c => c.isDirectionalLight);
-      const amb = scene.children.find(c => c.isAmbientLight);
-
-      if (game.isDay) {
-        fog.color.set(0x7ec8ff);
-        fog.near = 50;
-        fog.far = 220;
-        sun.intensity = 1.2;
-        amb.intensity = 0.4;
-        createZombies();
-      } else {
-        fog.color.set(0x111111);
-        fog.near = 5;
-        fog.far = 40;
-        sun.intensity = 0.1;
-        amb.intensity = 0.1;
-      }
-    }
-
-    // --- JOYSTICK & BUTTONS ---
-    const stickBase = document.getElementById("stickBase");
-    const stickKnob = document.getElementById("stickKnob");
-    const radius = 25;
-
-    stickBase.addEventListener("touchstart", e => {
-      e.preventDefault();
-      sticksTracking = true;
+    // Start button
+    document.getElementById("btnStart").addEventListener("click", () => {
+      document.getElementById("menuScreen").style.display = "none";
+      window.game.paused = false;
+      initMap();          // comes from map.js
+      initPlayer();       // put in map.js or player.js
+      createZombies();    // comes from zombie.js
+      window.game.isDay = true;
+      updateDayNight();   // comes from zombie.js
+      updateHUD();
+      animate();          // comes from zombie.js
     });
-
-    document.addEventListener("touchmove", e => {
-      if (!sticksTracking) return;
-      e.preventDefault();
-      const rect = stickBase.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const tx = e.touches[0].clientX;
-      const ty = e.touches[0].clientY;
-      let dx = tx - cx;
-      let dy = ty - cy;
-      const len = Math.hypot(dx, dy);
-      if (len > radius) {
-        const ang = Math.atan2(dy, dx);
-        dx = Math.cos(ang) * radius;
-        dy = Math.sin(ang) * radius;
-      }
-      stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-      game.move.x = dx / radius;
-      game.move.y = dy / radius;
-    }, { passive: false });
-
-    document.addEventListener("touchend", () => {
-      sticksTracking = false;
-      game.move.x = 0;
-      game.move.y = 0;
-      stickKnob.style.transform = "translate(0px, 0px)";
+  </script>
+</body>
+</html>
