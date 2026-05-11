@@ -2,428 +2,219 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Zombie Waves 3D Maps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Zombie Waves 3D</title>
   <style>
-    :root {
-      --safe-top: env(safe-area-inset-top);
-      --safe-bottom: env(safe-area-inset-bottom);
-      --safe-left: env(safe-area-inset-left);
-      --safe-right: env(safe-area-inset-right);
-    }
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      touch-action: none;
-      overscroll-behavior: none;
       background: #1d3b5c;
     }
-    body { position: fixed; inset: 0; }
-
-    canvas {
+    #gameCanvas {
       display: block;
-      width: 100vw !important;
-      height: 100vh !important;
-      image-rendering: pixelated;
+      width: 100vw;
+      height: 100vh;
     }
-
-    #ui {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 5;
-      color: #fff;
-    }
-
-    #hud {
+    .hud {
       position: absolute;
-      top: max(10px, var(--safe-top));
-      left: max(10px, var(--safe-left));
+      top: 10px;
+      left: 10px;
       background: rgba(0,0,0,.55);
-      border: 3px solid rgba(255,255,255,.35);
-      border-radius: 14px;
-      padding: 10px 12px;
-      font-weight: 800;
-      font-size: 14px;
-      line-height: 1.35;
-      text-shadow: 0 2px 0 #000;
+      border: 3px solid #fff;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font: bold 14px 'Arial';
+      color: #fff;
       pointer-events: none;
+      z-index: 10;
     }
-
-    #menuBar {
+    .touchBtn {
       position: absolute;
-      top: max(10px, var(--safe-top));
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      pointer-events: auto;
-    }
-
-    .menuBtn {
-      border: 3px solid #000;
-      border-radius: 14px;
-      padding: 12px 16px;
-      background: linear-gradient(#ffd66d, #ff9d1e);
-      color: #000;
-      font-weight: 900;
-      font-size: 15px;
-      box-shadow: 0 4px 0 rgba(0,0,0,.3);
-      touch-action: manipulation;
-    }
-
-    #menuPanel {
-      position: absolute;
-      top: calc(60px + var(--safe-top));
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(360px, calc(100vw - 24px));
-      background: rgba(255,255,255,.95);
-      border: 4px solid #1d3b5c;
-      border-radius: 18px;
-      padding: 12px;
-      display: none;
-      pointer-events: auto;
-      color: #111;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
-
-    #mapSelect {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    #shop {
-      position: absolute;
-      right: max(10px, var(--safe-right));
-      top: max(10px, var(--safe-top));
-      width: min(320px, calc(100vw - 24px));
-      background: rgba(0,0,0,.78);
-      border: 3px solid #ffd54a;
-      border-radius: 16px;
-      box-shadow: 0 0 14px rgba(255,213,74,.22);
-      padding: 12px;
-      display: none;
-      pointer-events: auto;
-    }
-
-    #shop button {
-      width: 100%;
-      margin: 6px 0;
-      padding: 12px;
-      border: 3px solid #000;
-      border-radius: 12px;
-      background: linear-gradient(#ff7b7b, #d72d2d);
-      color: white;
-      font-weight: 900;
-      font-size: 15px;
-      touch-action: manipulation;
-    }
-
-    #centerMsg {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,.82);
-      border: 3px solid #ff4df2;
-      border-radius: 16px;
-      padding: 14px 18px;
-      text-align: center;
-      display: none;
-      pointer-events: none;
-      font-size: 18px;
-      text-shadow: 0 2px 0 #000;
-      max-width: 92vw;
-    }
-
-    #hotbar {
-      position: absolute;
-      left: 50%;
-      bottom: max(14px, var(--safe-bottom));
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      pointer-events: none;
-      z-index: 6;
-    }
-
-    .slot {
-      width: 110px;
-      height: 60px;
-      border-radius: 14px;
-      border: 4px solid rgba(255,255,255,.35);
-      background: rgba(0,0,0,.6);
+      border-radius: 50%;
+      border: 4px solid #000;
+      font: bold 18px Arial;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 900;
-      font-size: 13px;
-      text-align: center;
+      touch-action: manipulation;
     }
-
-    #touchUI {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      display: block;
+    #hitBtn {
+      bottom: 40px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle, #ff9b3d, #ff4a00);
     }
-
+    #jumpBtn {
+      bottom: 40px;
+      right: 20px;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, #ffffff, #ffd86a);
+    }
     #stickBase {
       position: absolute;
-      left: max(14px, var(--safe-left));
-      bottom: max(14px, var(--safe-bottom));
-      width: 180px;
-      height: 180px;
+      bottom: 40px;
+      left: 20px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
-      background: rgba(255,255,255,.18);
-      border: 5px solid rgba(0,0,0,.25);
-      pointer-events: auto;
+      background: rgba(255,255,255,.2);
+      border: 4px solid rgba(0,0,0,.35);
+      touch-action: none;
     }
-
     #stickKnob {
       position: absolute;
-      left: 62px;
-      top: 62px;
-      width: 56px;
-      height: 56px;
+      left: 40px;
+      top: 40px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: linear-gradient(#59d6ff, #0d6cff);
       border: 3px solid #000;
     }
-
-    .touchBtn {
-      position: absolute;
-      border-radius: 50%;
-      border: 5px solid #000;
-      color: #fff;
-      font-size: 18px;
-      font-weight: 900;
-      box-shadow: 0 6px 0 rgba(0,0,0,.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: auto;
-      touch-action: manipulation;
-    }
-
-    #hitBtn {
-      left: max(16px, var(--safe-left));
-      bottom: max(18px, var(--safe-bottom));
-      width: 108px;
-      height: 108px;
-      background: radial-gradient(circle, #ff9b3d, #ff4a00);
-    }
-
-    #jumpBtn {
-      right: calc(58px + var(--safe-right));
-      bottom: calc(18px + var(--safe-bottom));
-      width: 108px;
-      height: 108px;
-      background: radial-gradient(circle, #ffffff, #ffd86a);
-    }
-
-    #lookZone {
-      position: absolute;
-      left: 38%;
-      top: 0;
-      width: 62%;
-      height: 100%;
-      pointer-events: auto;
-    }
-
-    .touchBtn:active {
-      transform: scale(0.94);
-      box-shadow: 0 4px 0 rgba(0,0,0,.35);
-      transition: transform 0.08s ease-in-out, box-shadow 0.08s ease-in-out;
-    }
   </style>
 </head>
 <body>
-  <!-- INVISIBLE AUDIO ELEMENTS -->
-  <audio id="bgMusic" loop>
-    <source src="https://cdn.pixabay.com/audio/2022/05/23/audio_c7f9a27b90.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="hitSound">
-    <source src="https://cdn.pixabay.com/audio/2022/05/12/audio_4294b1923a.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="jumpSound">
-    <source src="https://cdn.pixabay.com/audio/2022/05/12/audio_7d5c0b1957.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="zombieHit">
-    <source src="https://cdn.pixabay.com/audio/2023/06/14/audio_0e9a72344c.mp3" type="audio/mpeg">
-  </audio>
-
-  <div id="ui">
-    <div id="hud"></div>
-
-    <div id="menuBar">
-      <button class="menuBtn" id="menuBtn">MAP</button>
-    </div>
-
-    <div id="menuPanel">
-      <select id="mapSelectBtn">
-        <option value="1">Map 1 · Normal</option>
-        <option value="2" disabled>Map 2 · Ice Age</option>
-        <option value="3" disabled>Map 3 · Hospital</option>
-      </select>
-      <button id="resumeBtn">Resume</button>
-    </div>
-
-    <div id="shop">
-      <div id="shopInfo"></div>
-      <button id="buySword">Buy Sword - 50</button>
-      <button id="buyGun">Buy Blaster - 120</button>
-      <button id="buyArmor">Buy Armor - 80</button>
-      <button id="closeShop">Close</button>
-    </div>
-
-    <div id="centerMsg"></div>
-
-    <div id="hotbar">
-      <div class="slot active" id="slot1">1 Fists</div>
-      <div class="slot" id="slot2">2 Empty</div>
-      <div class="slot" id="slot3">3 Empty</div>
-    </div>
-
-    <div id="touchUI">
-      <div id="stickBase"><div id="stickKnob"></div></div>
-      <button id="hitBtn" class="touchBtn">HIT</button>
-      <button id="jumpBtn" class="touchBtn">JUMP</button>
-      <div id="lookZone"></div>
-    </div>
-  </div>
-
   <canvas id="gameCanvas"></canvas>
+  <div class="hud">HEALTH: 100<br>WAVE: 1</div>
+  <div id="stickBase"><div id="stickKnob"></div></div>
+  <button id="hitBtn" class="touchBtn">HIT</button>
+  <button id="jumpBtn" class="touchBtn">JUMP</button>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <script>
-    let scene, camera, renderer, clock;
-    let player, zombies = [], bullets = [], coins = [], mapGeometry = [];
-    let currentMap = 1, gameRunning = false, shopOpen = false;
-    let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
-    let selectedWeapon = 1, yaw = 0, pitch = -0.2;
-    const weapons = {
-      1: { name: "Fists", damage: 15, range: 2.3, cooldown: 420 },
-      2: { name: "Sword", damage: 30, range: 3.2, cooldown: 320 },
-      3: { name: "Blaster", damage: 20, range: 100, cooldown: 170 }
-    };
+    let scene, camera, renderer;
+    let player, zombies = [];
     const move = { x: 0, y: 0 };
 
-    const hud = () => document.getElementById("hud");
-    const shopEl = () => document.getElementById("shop");
-    const mapPanel = () => document.getElementById("menuPanel");
-    const mapBtn = () => document.getElementById("mapSelectBtn");
-    const resumeBtn = () => document.getElementById("resumeBtn");
-    const hitBtn = () => document.getElementById("hitBtn");
-    const jumpBtn = () => document.getElementById("jumpBtn");
-    const menuBtn = () => document.getElementById("menuBtn");
-    const centerMsg = () => document.getElementById("centerMsg");
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x7ec8ff);
 
-    // Audio helpers
-    const bgMusic = 0;
-    const hitSound = 1;
-    const jumpSound = 2;
-    const zombieHit = 3;
-    const audios = ["bgMusic", "hitSound", "jumpSound", "zombieHit"].map(id => document.getElementById(id));
+      const fov = 75;
+      const aspect = window.innerWidth / window.innerHeight;
+      camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 1000);
 
-    const playSound = (idx) => {
-      try {
-        audios[idx].currentTime = 0;
-        audios[idx].play().catch(() => {});
-      } catch {}
-    };
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gameCanvas"), antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 
-    const startGame = () => {
-      if (gameRunning) return;
-      gameRunning = true;
-      audios[0].play().catch(() => {});
-      showCenter("Game started!", 1000);
-      clock = new THREE.Clock();
-      animate();
-    };
+      window.addEventListener("resize", () => {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        renderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      });
 
-    const setMap = (mapIdx) => {
-      if (!gameRunning) return;
-      currentMap = mapIdx;
-      while (mapGeometry.length) {
-        scene.remove(mapGeometry.pop());
-      }
-      if (mapIdx === 1) {
-        scene.background = new THREE.Color(0x7ec8ff);
-        const ground = new THREE.Mesh(
-          new THREE.PlaneGeometry(300, 300),
-          new THREE.MeshLambertMaterial({ color: 0x85c964 })
-        );
-        ground.rotation.x = -Math.PI / 2;
-        scene.add(ground);
-        mapGeometry.push(ground);
-      }
-      spawnZombies();
-      showCenter(`Map ${mapIdx}`, 1200);
-    };
+      // Light
+      const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+      sun.position.set(10, 20, 8);
+      scene.add(sun);
+      scene.add(new THREE.AmbientLight(0x8fb3ff, 0.4));
 
-    const showCenter = (txt, t = 1400) => {
-      centerMsg().textContent = txt;
-      centerMsg().style.display = "block";
-      clearTimeout(showCenter.t);
-      showCenter.t = setTimeout(() => centerMsg().style.display = "none", t);
-    };
+      // Ground
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(100, 100),
+        new THREE.MeshLambertMaterial({ color: 0x88cc66 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
 
-    const spawnZombies = () => {
-      zombies.forEach(z => scene.remove(z.mesh));
-      zombies = [];
-      const n = 3 + wave * 2;
-      const spread = 18 + wave * 10;
-      for (let i = 0; i < n; i++) {
-        const m = new THREE.Mesh(
+      // Player
+      player = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2, 1),
+        new THREE.MeshLambertMaterial({ color: 0xff4444 })
+      );
+      player.position.y = 1;
+      scene.add(player);
+
+      // Zombies
+      for (let i = 0; i < 5; i++) {
+        const z = new THREE.Mesh(
           new THREE.BoxGeometry(1, 2, 1),
           new THREE.MeshLambertMaterial({ color: 0x55aa55 })
         );
-        m.position.x = (Math.random() - 0.5) * spread;
-        m.position.z = (Math.random() - 0.5) * spread;
-        m.position.y = 1;
-        scene.add(m);
-        zombies.push({ mesh: m, health: 20 + wave * 5, speed: 0.2 + wave * 0.03, attackCd: 0 });
+        const r = 20;
+        z.position.set(
+          (Math.random() - 0.5) * 2 * r,
+          1,
+          (Math.random() - 0.5) * 2 * r
+        );
+        scene.add(z);
+        zombies.push(z);
       }
-    };
 
-    const hudUpdate = () => {
-      hud().innerHTML =
-        `HEALTH: ${Math.ceil(health)} / ${maxHealth}<br>` +
-        `ARMOR: ${armor}<br>` +
-        `COINS: ${coinsCount}<br>` +
-        `WAVE: ${wave}<br>` +
-        `KILLS: ${kills}<br>` +
-        `WEAPON: ${weapons[selectedWeapon].name}`;
-    };
+      // Start camera
+      camera.position.set(0, 5, 10);
+      camera.lookAt(player.position);
 
-    // Basic capsule player
-    const initPlayer = () => {
-      player = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshLambertMaterial({ color: 0xff0000 }));
-      player.add(body);
-      scene.add(player);
-      player.position.set(0, 1, 0);
-    };
+      animate();
+    }
 
-    const init = () => {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gameCanvas") });
-      renderer.setSize(innerWidth, innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
-      const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-      sun.position.set(10, 18, 8);
-      scene.add(sun);
-      scene.add(new THREE.AmbientLight(0x8fb3ff, 0.45));
-      initPlayer();
-      startGame();
-    };
+    function animate() {
+      requestAnimationFrame(animate);
 
-    const animate = () => {
-      const dt = clock.getDelta();
+      // Joystick movement
+      const speed = 0.25;
+      player.position.x += move.x * speed;
+      player.position.z += move.y * speed;
+
+      // Keep zombies near by
+      zombies.forEach(z => {
+        const dir = new THREE.Vector3()
+          .subVectors(player.position, z.position)
+          .normalize();
+        z.position.addScaledVector(dir, 0.06);
+        z.lookAt(player.position);
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    // Joystick
+    const base = document.getElementById("stickBase");
+    const kn = document.getElementById("stickKnob");
+    let tracking = false;
+    const radius = 30;
+
+    base.addEventListener("touchstart", e => {
+      e.preventDefault();
+      tracking = true;
+    });
+
+    document.addEventListener("touchmove", e => {
+      if (!tracking) return;
+      e.preventDefault();
+      const rect = base.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const tx = e.touches[0].clientX;
+      const ty = e.touches[0].clientY;
+      let dx = tx - cx;
+      let dy = ty - cy;
+      const len = Math.hypot(dx, dy);
+      if (len > radius) {
+        const ang = Math.atan2(dy, dx);
+        dx = Math.cos(ang) * radius;
+        dy = Math.sin(ang) * radius;
+      }
+      kn.style.transform = `translate(${dx}px, ${dy}px)`;
+      move.x = dx / radius;
+      move.y = dy / radius;
+    }, { passive: false });
+
+    document.addEventListener("touchend", () => {
+      tracking = false;
+      move.x = 0;
+      move.y = 0;
+      kn.style.transform = "translate(0px, 0px)";
+    });
+
+    init();
+  </script>
+</body>
+</html>
