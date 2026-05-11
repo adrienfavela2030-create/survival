@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Zombie Waves Roblox Mobile</title>
   <style>
-    :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); --safe-right: env(safe-area-inset-right); }
+    :root {
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+      --safe-left: env(safe-area-inset-left);
+      --safe-right: env(safe-area-inset-right);
+    }
     html, body {
       margin: 0;
       width: 100%;
@@ -305,7 +310,7 @@
   <div id="loading">
     <div class="card">
       <h1 style="margin:0 0 10px 0;">Joining world...</h1>
-      <p style="margin:0; font-size:18px; line-height:1.5;">Generating map, trees, rocks, buildings, and zombies.</p>
+      <p style="margin:0; font-size:18px; line-height:1.5;">Loading starter zones and nearby chunks.</p>
     </div>
   </div>
 
@@ -353,6 +358,7 @@
   <script>
     let scene, camera, renderer, clock, player;
     let zombies = [], bullets = [], coins = [], decor = [];
+    let generatedChunks = new Set();
     let gameRunning = false, gameOver = false, shopOpen = false, menuOpen = false;
     let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
     let selectedWeapon = 1, yaw = 0, pitch = -0.2, lastHitTime = 0;
@@ -373,6 +379,8 @@
     const shopEl = () => document.getElementById("shop");
     const rotateScreen = () => document.getElementById("rotateScreen");
     const menuPanel = () => document.getElementById("menuPanel");
+
+    function chunkKey(cx, cz) { return `${cx},${cz}`; }
 
     function zombieStats() {
       return { health: 25 + wave * 10, speed: 0.28 + wave * 0.032, damage: 6 + wave * 2 };
@@ -457,6 +465,7 @@
       gameRunning = true;
       document.getElementById("loading").style.display = "none";
       showCenter("Welcome!");
+      generateStarterZones();
       spawnWave();
     }
 
@@ -466,6 +475,7 @@
       coins.forEach(c => scene.remove(c));
       decor.forEach(d => scene.remove(d));
       zombies = []; bullets = []; coins = []; decor = [];
+      generatedChunks = new Set();
       wave = 1; kills = 0; coinsCount = 0; health = 100; maxHealth = 100; armor = 0;
       unlockedSword = false; unlockedGun = false;
       selectedWeapon = 1; gameOver = false; shopOpen = false; menuOpen = false;
@@ -474,7 +484,7 @@
       updateHotbar();
       updateShopText();
       updateMenuText();
-      generateWorld();
+      generateStarterZones();
       spawnWave();
       showCenter("Restarted");
     }
@@ -536,14 +546,38 @@
       decor.push(group);
     }
 
-    function generateWorld() {
-      for (let i = 0; i < 40; i++) {
-        const x = (Math.random() - 0.5) * 220;
-        const z = (Math.random() - 0.5) * 220;
+    function populateChunk(cx, cz) {
+      const key = chunkKey(cx, cz);
+      if (generatedChunks.has(key)) return;
+      generatedChunks.add(key);
+      const baseX = cx * 48;
+      const baseZ = cz * 48;
+      const count = 4 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < count; i++) {
+        const x = baseX + (Math.random() - 0.5) * 40;
+        const z = baseZ + (Math.random() - 0.5) * 40;
         const r = Math.random();
-        if (r < 0.45) makeTree(x, z);
-        else if (r < 0.75) makeRock(x, z);
+        if (r < 0.5) makeTree(x, z);
+        else if (r < 0.8) makeRock(x, z);
         else makeBuilding(x, z);
+      }
+    }
+
+    function generateStarterZones() {
+      for (let cx = -1; cx <= 1; cx++) {
+        for (let cz = -1; cz <= 1; cz++) {
+          populateChunk(cx, cz);
+        }
+      }
+    }
+
+    function updateChunks() {
+      const cx = Math.floor(player.position.x / 48);
+      const cz = Math.floor(player.position.z / 48);
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          populateChunk(cx + dx, cz + dz);
+        }
       }
     }
 
@@ -685,7 +719,6 @@
       player.position.set(0, 1, 0);
       scene.add(player);
 
-      generateWorld();
       bindEvents();
       updateOrientationUI();
       updateHotbar();
@@ -700,12 +733,10 @@
       document.getElementById("resumeBtn").onclick = () => toggleMenu(false);
       document.getElementById("shopOpenBtn").onclick = () => { toggleMenu(false); toggleShop(true); };
       document.getElementById("restartBtn").onclick = () => restartAll();
-
       document.getElementById("closeShop").onclick = () => toggleShop(false);
       document.getElementById("buySword").onclick = () => buyWeapon(2, 50);
       document.getElementById("buyGun").onclick = () => buyWeapon(3, 120);
       document.getElementById("buyArmor").onclick = buyArmorItem;
-
       document.getElementById("actionBtn").onclick = attack;
       document.getElementById("jumpBtn").onclick = () => { if (grounded && gameRunning && !menuOpen && !shopOpen) verticalVel = 0.24; };
 
@@ -726,8 +757,8 @@
         pitch -= e.movementY * 0.0025;
         pitch = Math.max(-1.1, Math.min(0.35, pitch));
       });
-
       document.addEventListener("mousedown", attack);
+
       window.addEventListener("resize", onResize);
       window.addEventListener("orientationchange", updateOrientationUI);
 
@@ -771,7 +802,6 @@
 
       let looking = false, lastTouchX = 0, lastTouchY = 0;
       const lookZone = document.getElementById("lookZone");
-
       lookZone.addEventListener("touchstart", e => {
         if (e.touches.length !== 1) return;
         looking = true;
@@ -828,6 +858,8 @@
         camera.position.copy(player.position);
         camera.position.y = player.position.y + 1.45;
         camera.rotation.set(pitch, yaw, 0, "YXZ");
+
+        updateChunks();
 
         zombies.forEach(z => {
           if (z.dead) return;
