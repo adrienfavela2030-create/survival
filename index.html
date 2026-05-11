@@ -18,20 +18,23 @@
       overflow: hidden;
       touch-action: none;
       overscroll-behavior: none;
+      background: #1d3b5c;
     }
     body { position: fixed; inset: 0; }
 
+    /* LOADING SCREEN */
     #loadingScreen {
       position: fixed;
       inset: 0;
       z-index: 99;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: #000;
       color: #00ff99;
-      flex-direction: column;
       font-family: Arial, sans-serif;
+      transition: opacity 0.5s ease-out, visibility 0.5s;
     }
 
     #loadingScreen h1 {
@@ -40,13 +43,28 @@
       margin: 0 0 12px 0;
     }
 
-    #loadingScreen p {
-      font-size: 18px;
-      max-width: 520px;
-      text-align: center;
-      line-height: 1.5;
+    .loadingBarWrapper {
+      width: 80%;
+      max-width: 420px;
+      background: rgba(255,255,255,.15);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
     }
 
+    .loadingBarFill {
+      height: 10px;
+      background: linear-gradient(90deg, #00ff99, #00ffb3);
+      border-radius: 10px;
+      animation: load 3s ease-in-out 1 forwards;
+    }
+
+    @keyframes load {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    /* GAME CANVAS & UI */
     canvas {
       display: block;
       width: 100vw !important;
@@ -248,20 +266,20 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    #jumpBtn {
-      right: calc(58px + var(--safe-right));
-      bottom: calc(18px + var(--safe-bottom));
-      width: 108px;
-      height: 108px;
-      background: radial-gradient(circle, #ffffff, #ffd86a);
-    }
-
     #hitBtn {
       left: max(16px, var(--safe-left));
       bottom: max(18px, var(--safe-bottom));
       width: 108px;
       height: 108px;
       background: radial-gradient(circle, #ff9b3d, #ff4a00);
+    }
+
+    #jumpBtn {
+      right: calc(58px + var(--safe-right));
+      bottom: calc(18px + var(--safe-bottom));
+      width: 108px;
+      height: 108px;
+      background: radial-gradient(circle, #ffffff, #ffd86a);
     }
 
     #lookZone {
@@ -296,6 +314,12 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    .touchBtn:active, .touchBtn.touched {
+      transform: scale(0.94);
+      box-shadow: 0 4px 0 rgba(0,0,0,.35);
+      transition: transform 0.08s ease-in-out, box-shadow 0.08s ease-in-out;
+    }
+
     @media (max-width: 900px) {
       #touchUI { display: block; }
       #lookZone { left: 34%; width: 66%; }
@@ -304,18 +328,15 @@
       #hitBtn { width: 96px; height: 96px; bottom: calc(18px + var(--safe-bottom)); }
       #jumpBtn { width: 96px; height: 96px; }
     }
-
-    .touchBtn:active, .touchBtn:touch {
-      transform: scale(0.94);
-      box-shadow: 0 4px 0 rgba(0,0,0,.35);
-      transition: transform 0.08s ease-in-out, box-shadow 0.08s ease-in-out;
-    }
   </style>
 </head>
 <body>
+  <!-- LOADING SCREEN WITH 3-SECOND BAR -->
   <div id="loadingScreen">
     <h1>LOADING MAP</h1>
-    <p>Initializing world, zombies, and shop.</p>
+    <div class="loadingBarWrapper">
+      <div class="loadingBarFill"></div>
+    </div>
   </div>
 
   <div id="rotateScreen">
@@ -369,8 +390,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <script>
     let scene, camera, renderer, clock;
-    let player, playerHead, playerBody, playerLegs;
-    let zombies = [], bullets = [], coins = [], decor = [];
+    let player, playerBody, playerHead;
+    let zombies = [], bullets = [], coins = [];
     let gameRunning = false, gameOver = false, shopOpen = false, menuOpen = false;
     let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
     let selectedWeapon = 1, yaw = 0, pitch = -0.2, lastHitTime = 0;
@@ -421,26 +442,4 @@
     function updateShopText() {
       document.getElementById("shopInfo").innerHTML =
         `Coins: ${coinsCount}<br>Armor: ${armor}<br>Health: ${Math.ceil(health)} / ${maxHealth}<br><br>` +
-        `Sword: ${unlockedSword ? "Owned" : "Locked"}<br>Blaster: ${unlockedGun ? "Owned" : "Locked"}`;
-    }
-
-    function updateMenuText() {
-      document.getElementById("menuInfo").innerHTML =
-        `Wave: ${wave}<br>Kills: ${kills}<br>Coins: ${coinsCount}<br>Weapon: ${weapons[selectedWeapon].name}`;
-    }
-
-    function toggleMenu(state) {
-      menuOpen = state;
-      menuPanel().style.display = menuOpen ? "block" : "none";
-      if (menuOpen) updateMenuText();
-    }
-
-    function toggleShop(state) {
-      if (!gameRunning || gameOver) return;
-      shopOpen = state;
-      shopEl().style.display = shopOpen ? "block" : "none";
-      updateShopText();
-    }
-
-    function setWeapon(id) {
-     
+        `Sword: ${unlockedSword ? "Owned" : "Locked"}<br
