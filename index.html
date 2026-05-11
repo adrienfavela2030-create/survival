@@ -96,11 +96,6 @@
       gap: 8px;
       margin-bottom: 12px;
     }
-    #mapSelect button {
-      width: auto;
-      font-size: 14px;
-      padding: 8px 12px;
-    }
 
     #shop {
       position: absolute;
@@ -116,7 +111,6 @@
       pointer-events: auto;
     }
 
-    #shop h3 { margin: 0 0 8px 0; color: #ffd54a; }
     #shop button {
       width: 100%;
       margin: 6px 0;
@@ -172,11 +166,6 @@
       text-align: center;
     }
 
-    .slot.active {
-      border-color: #ffea00;
-      box-shadow: 0 0 14px rgba(255,234,0,.5);
-    }
-
     #touchUI {
       position: absolute;
       inset: 0;
@@ -195,6 +184,7 @@
       border: 5px solid rgba(0,0,0,.25);
       pointer-events: auto;
     }
+
     #stickKnob {
       position: absolute;
       left: 62px;
@@ -219,7 +209,6 @@
       justify-content: center;
       pointer-events: auto;
       touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
     }
 
     #hitBtn {
@@ -235,7 +224,7 @@
       bottom: calc(18px + var(--safe-bottom));
       width: 108px;
       height: 108px;
-      background: radial-gradient(circle, #fffcee, #ffd8ff);
+      background: radial-gradient(circle, #ffffff, #ffd86a);
     }
 
     #lookZone {
@@ -255,7 +244,20 @@
   </style>
 </head>
 <body>
-  <!-- MAP / MENU / SHOP / HUD -->
+  <!-- INVISIBLE AUDIO ELEMENTS -->
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/audio/2022/05/23/audio_c7f9a27b90.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="hitSound">
+    <source src="https://cdn.pixabay.com/audio/2022/05/12/audio_4294b1923a.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="jumpSound">
+    <source src="https://cdn.pixabay.com/audio/2022/05/12/audio_7d5c0b1957.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="zombieHit">
+    <source src="https://cdn.pixabay.com/audio/2023/06/14/audio_0e9a72344c.mp3" type="audio/mpeg">
+  </audio>
+
   <div id="ui">
     <div id="hud"></div>
 
@@ -264,17 +266,15 @@
     </div>
 
     <div id="menuPanel">
-      <h3>Maps (3)</h3>
-      <div id="mapSelect">
-        <button id="map1Btn">Map 1 · Normal</button>
-        <button id="map2Btn" disabled>Map 2 · Ice Age</button>
-        <button id="map3Btn" disabled>Map 3 · Hospital (W20)</button>
-      </div>
+      <select id="mapSelectBtn">
+        <option value="1">Map 1 · Normal</option>
+        <option value="2" disabled>Map 2 · Ice Age</option>
+        <option value="3" disabled>Map 3 · Hospital</option>
+      </select>
       <button id="resumeBtn">Resume</button>
     </div>
 
     <div id="shop">
-      <h3>Shop</h3>
       <div id="shopInfo"></div>
       <button id="buySword">Buy Sword - 50</button>
       <button id="buyGun">Buy Blaster - 120</button>
@@ -302,128 +302,128 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <script>
-    // WORLD STATE
-    let currentMap = 1, mapLocked = { map2: true, map3: true };
     let scene, camera, renderer, clock;
-
-    // 3D CHARACTER (Roblox style block skeleton)
-    let playerModel, playerBody, playerHead, playerLegs, walkTime = 0;
-
-    // Game entities
-    let zombies = [], bullets = [], coins = [], decor = [];
-    let gameRunning = false, gameOver = false, shopOpen = false, menuOpen = false;
+    let player, zombies = [], bullets = [], coins = [], mapGeometry = [];
+    let currentMap = 1, gameRunning = false, shopOpen = false;
     let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
-    let selectedWeapon = 1;
-    let yaw = 0, pitch = -0.2, lastHitTime = 0;
-    let unlockedSword = false, unlockedGun = false;
-    let verticalVel = 0, grounded = true;
-    const gravity = 0.014;
-    const keys = {};
-    const move = { x: 0, y: 0 };
-
+    let selectedWeapon = 1, yaw = 0, pitch = -0.2;
     const weapons = {
       1: { name: "Fists", damage: 15, range: 2.3, cooldown: 420 },
       2: { name: "Sword", damage: 30, range: 3.2, cooldown: 320 },
       3: { name: "Blaster", damage: 20, range: 100, cooldown: 170 }
     };
+    const move = { x: 0, y: 0 };
 
     const hud = () => document.getElementById("hud");
-    const centerMsg = () => document.getElementById("centerMsg");
-    const menuPanel = () => document.getElementById("menuPanel");
     const shopEl = () => document.getElementById("shop");
+    const mapPanel = () => document.getElementById("menuPanel");
+    const mapBtn = () => document.getElementById("mapSelectBtn");
+    const resumeBtn = () => document.getElementById("resumeBtn");
+    const hitBtn = () => document.getElementById("hitBtn");
+    const jumpBtn = () => document.getElementById("jumpBtn");
+    const menuBtn = () => document.getElementById("menuBtn");
+    const centerMsg = () => document.getElementById("centerMsg");
 
-    const map1Btn = () => document.getElementById("map1Btn");
-    const map2Btn = () => document.getElementById("map2Btn");
-    const map3Btn = () => document.getElementById("map3Btn");
+    // Audio helpers
+    const bgMusic = 0;
+    const hitSound = 1;
+    const jumpSound = 2;
+    const zombieHit = 3;
+    const audios = ["bgMusic", "hitSound", "jumpSound", "zombieHit"].map(id => document.getElementById(id));
 
-    function showCenter(text, time = 1400) {
-      centerMsg().textContent = text;
-      centerMsg().style.display = "block";
-      clearTimeout(showCenter.t);
-      showCenter.t = setTimeout(() => centerMsg().style.display = "none", time);
-    }
+    const playSound = (idx) => {
+      try {
+        audios[idx].currentTime = 0;
+        audios[idx].play().catch(() => {});
+      } catch {}
+    };
 
-    function showMapLocked() {
-      if (wave < 10) {
-        map2Btn().disabled = true;
-        map2Btn().style.opacity = 0.5;
-      } else {
-        map2Btn().disabled = false;
-        map2Btn().style.opacity = 1;
-        if (wave >= 20 && currentMap === 2) {
-          map3Btn().disabled = false;
-          map3Btn().style.opacity = 1;
-          showCenter("Hantavirus Hospital unlocked!", 2000);
-        }
-      }
-    }
+    const startGame = () => {
+      if (gameRunning) return;
+      gameRunning = true;
+      audios[0].play().catch(() => {});
+      showCenter("Game started!", 1000);
+      clock = new THREE.Clock();
+      animate();
+    };
 
-    function updateHotbar() {
-      document.getElementById("slot1").textContent = "1 Fists";
-      document.getElementById("slot2").textContent = unlockedSword ? "2 Sword" : "2 Empty";
-      document.getElementById("slot3").textContent = unlockedGun ? "3 Blaster" : "3 Empty";
-      ["slot1","slot2","slot3"].forEach((id, i) => {
-        document.getElementById(id).classList.toggle("active", selectedWeapon === i + 1);
-      });
-    }
-
-    function updateShopText() {
-      document.getElementById("shopInfo").innerHTML =
-        `Coins: ${coinsCount}<br>Armor: ${armor}<br>Health: ${Math.ceil(health)} / ${maxHealth}<br><br>` +
-        `Sword: ${unlockedSword ? "Owned" : "Locked"}<br>Blaster: ${unlockedGun ? "Owned" : "Locked"}`;
-    }
-
-    function switchMap(newMap) {
+    const setMap = (mapIdx) => {
       if (!gameRunning) return;
-
-      // clear old world
-      decor.forEach(obj => scene.remove(obj));
-      zombies.forEach(z => scene.remove(z.mesh));
-      decor = [];
-      zombies = [];
-
-      currentMap = newMap;
-
-      // MAP 1: Normal city / forest
-      if (newMap === 1) {
+      currentMap = mapIdx;
+      while (mapGeometry.length) {
+        scene.remove(mapGeometry.pop());
+      }
+      if (mapIdx === 1) {
         scene.background = new THREE.Color(0x7ec8ff);
-        scene.fog = new THREE.Fog(0x7ec8ff, 20, 180);
         const ground = new THREE.Mesh(
           new THREE.PlaneGeometry(300, 300),
           new THREE.MeshLambertMaterial({ color: 0x85c964 })
         );
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
-        decor.push(ground);
+        mapGeometry.push(ground);
+      }
+      spawnZombies();
+      showCenter(`Map ${mapIdx}`, 1200);
+    };
 
-        const grid = new THREE.GridHelper(300, 60, 0x6ebf4a, 0x7cb85d);
-        grid.position.y = 0.02;
-        scene.add(grid);
-        decor.push(grid);
+    const showCenter = (txt, t = 1400) => {
+      centerMsg().textContent = txt;
+      centerMsg().style.display = "block";
+      clearTimeout(showCenter.t);
+      showCenter.t = setTimeout(() => centerMsg().style.display = "none", t);
+    };
 
-        for (let i = 0; i < 40; i++) {
-          const x = (Math.random() - 0.5) * 220;
-          const z = (Math.random() - 0.5) * 220;
-          const r = Math.random();
-          const group = new THREE.Group();
-          group.position.set(x, 0, z);
-          if (r < 0.4) {
-            // simple tree
-            const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3, 0.6), new THREE.MeshLambertMaterial({ color: 0x8b5a2b }));
-            trunk.position.y = 1.5;
-            const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.3, 8, 8), new THREE.MeshLambertMaterial({ color: 0x2ca24c }));
-            leaves.position.y = 3.2;
-            group.add(trunk, leaves);
-          } else if (r < 0.7) {
-            // rock
-            const rock = new THREE.Mesh(
-              new THREE.DodecahedronGeometry(1.2 + Math.random() * 0.5, 0),
-              new THREE.MeshLambertMaterial({ color: 0x777777 })
-            );
-            rock.position.y = 1;
-            rock.rotation.set(Math.random(), Math.random(), Math.random());
-            group.add(rock);
-          } else {
-            // small building
-            const base = new THREE.Mesh(
-              new THREE.BoxGeometry(5 + Math.random() * 3, 4 + Math.random() * 
+    const spawnZombies = () => {
+      zombies.forEach(z => scene.remove(z.mesh));
+      zombies = [];
+      const n = 3 + wave * 2;
+      const spread = 18 + wave * 10;
+      for (let i = 0; i < n; i++) {
+        const m = new THREE.Mesh(
+          new THREE.BoxGeometry(1, 2, 1),
+          new THREE.MeshLambertMaterial({ color: 0x55aa55 })
+        );
+        m.position.x = (Math.random() - 0.5) * spread;
+        m.position.z = (Math.random() - 0.5) * spread;
+        m.position.y = 1;
+        scene.add(m);
+        zombies.push({ mesh: m, health: 20 + wave * 5, speed: 0.2 + wave * 0.03, attackCd: 0 });
+      }
+    };
+
+    const hudUpdate = () => {
+      hud().innerHTML =
+        `HEALTH: ${Math.ceil(health)} / ${maxHealth}<br>` +
+        `ARMOR: ${armor}<br>` +
+        `COINS: ${coinsCount}<br>` +
+        `WAVE: ${wave}<br>` +
+        `KILLS: ${kills}<br>` +
+        `WEAPON: ${weapons[selectedWeapon].name}`;
+    };
+
+    // Basic capsule player
+    const initPlayer = () => {
+      player = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshLambertMaterial({ color: 0xff0000 }));
+      player.add(body);
+      scene.add(player);
+      player.position.set(0, 1, 0);
+    };
+
+    const init = () => {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gameCanvas") });
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
+      const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+      sun.position.set(10, 18, 8);
+      scene.add(sun);
+      scene.add(new THREE.AmbientLight(0x8fb3ff, 0.45));
+      initPlayer();
+      startGame();
+    };
+
+    const animate = () => {
+      const dt = clock.getDelta();
