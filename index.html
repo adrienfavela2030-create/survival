@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Zombie Forest Nights</title>
+  <title>Zombie Forest Nights (3D)</title>
   <style>
     html, body {
       margin: 0;
@@ -12,6 +12,8 @@
       overflow: hidden;
       background: #1d3b5c;
       touch-action: none;
+      -webkit-touch-callout: none;
+      user-select: none;
     }
     #gameCanvas {
       display: block;
@@ -40,7 +42,6 @@
       align-items: center;
       justify-content: center;
       touch-action: manipulation;
-      z-index: 20;
     }
     #jumpBtn {
       bottom: 30px;
@@ -67,6 +68,7 @@
       background: rgba(255,255,255,.2);
       border: 4px solid rgba(0,0,0,.35);
       touch-action: none;
+      z-index: 20;
     }
     #stickKnob {
       position: absolute;
@@ -101,25 +103,28 @@
   </style>
 </head>
 <body>
+  <!-- HOME MENU -->
   <div id="menuScreen">
     <div>ZOMBIE FOREST NIGHTS</div>
     <button id="btnStart">Start Night 1</button>
   </div>
 
-  <canvas id="gameCanvas"></canvas>
+  <!-- CANVAS -->
+  anvas id="gameCanvas"></canvas>
   <div class="hud" id="hud">HEALTH: 100</div>
 
+  <!-- JOYSTICK -->
   <div id="stickBase"><div id="stickKnob"></div></div>
+
+  <!-- BUTTONS -->
   <button id="hitBtn" class="touchBtn">HIT</button>
   <button id="jumpBtn" class="touchBtn">JUMP</button>
 
+  <!-- THREE.JS CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/zombie.js"></script>
-
   <script>
-    // Game state (global)
-    window.game = {
+    // Game data
+    let game = {
       isDay: true,
       night: 1,
       maxNights: 10,
@@ -127,33 +132,233 @@
       maxHealth: 100,
       hearts: 0,
       coins: 0,
-      paused: true,
       move: { x: 0, y: 0 },
       hitPressed: false,
       isJumping: false
     };
 
+    let scene, camera, renderer, player, zombies = [];
+
     function updateHUD() {
-      const hud = document.getElementById("hud");
-      hud.innerHTML = `
-        NIGHT: ${window.game.isDay ? "DAY" : window.game.night}
-        HEALTH: ${window.game.health} / ${window.game.maxHealth}
-        HEARTS: ${window.game.hearts}
-        COINS: ${window.game.coins}
+      document.getElementById("hud").innerHTML = `
+        NIGHT: ${game.isDay ? "DAY" : game.night}
+        HEALTH: ${game.health} / ${game.maxHealth}
+        HEARTS: ${game.hearts}
+        COINS: ${game.coins}
       `;
     }
 
-    // Start button
+    // --- SET UP 3D MAP ---
+    function createMap() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x7ec8ff);
+      scene.fog = new THREE.Fog(0x7ec8ff, 50, 200);
+
+      const w = window.innerWidth, h = window.innerHeight;
+      camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+      camera.position.set(0, 5, 10);
+      camera.lookAt(0, 1, 0);
+
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gameCanvas"), antialias: true });
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+
+      window.addEventListener("resize", () => {
+        const ww = window.innerWidth;
+        const hh = window.innerHeight;
+        renderer.setSize(ww, hh);
+        camera.aspect = ww / hh;
+        camera.updateProjectionMatrix();
+      });
+
+      // Lighting
+      const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+      sun.position.set(10, 20, 8);
+      const amb = new THREE.AmbientLight(0x8fb3ff, 0.4);
+      scene.add(sun, amb);
+
+      // Ground
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(400, 400),
+        new THREE.MeshLambertMaterial({ color: 0x00aa00 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+
+      // Simple trees (green cubes for now)
+      const treeMat = new THREE.MeshLambertMaterial({ color: 0x228822 });
+      for (let i = 0; i < 60; i++) {
+        const x = (Math.random() - 0.5) * 360;
+        const z = (Math.random() - 0.5) * 360;
+        const h = 3 + Math.random() * 2;
+
+        const trunk = new THREE.Mesh(
+          new THREE.BoxGeometry(0.5, h, 0.5),
+          new THREE.MeshLambertMaterial({ color: 0x8b5a2b })
+        );
+        trunk.position.y = h / 2;
+
+        const crown = new THREE.Mesh(
+          new THREE.SphereGeometry(1.2, 6, 5),
+          treeMat
+        );
+        crown.position.y = h + 0.8;
+
+        const tree = new THREE.Group();
+        tree.add(trunk, crown);
+        tree.position.set(x, 0, z);
+        scene.add(tree);
+      }
+
+      // Safe zone: tent + campfire
+      const tent = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 3, 4),
+        new THREE.MeshLambertMaterial({ color: 0xaa0000 })
+      );
+      tent.position.set(20, 1.5, 20);
+      scene.add(tent);
+
+      const fire = new THREE.Mesh(
+        new THREE.ConeGeometry(0.8, 1.2, 8),
+        new THREE.MeshLambertMaterial({ color: 0xff6600 })
+      );
+      fire.rotation.x = Math.PI;
+      fire.position.set(20, 0.6, 20);
+      scene.add(fire);
+
+      // Player
+      player = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2, 1),
+        new THREE.MeshLambertMaterial({ color: 0xff4444 })
+      );
+      player.position.set(0, 1, 10);
+      scene.add(player);
+
+      // Initial state
+      game.isDay = true;
+      spawnZombies();
+      updateHUD();
+      animate();
+    }
+
+    function spawnZombies() {
+      const n = 10 + (game.night - 1) * 2;
+      for (let i = 0; i < n; i++) {
+        const x = (Math.random() - 0.5) * 300;
+        const z = (Math.random() - 0.5) * 300;
+        const zMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(1, 2, 1),
+          new THREE.MeshLambertMaterial({ color: 0x55aa55 })
+        );
+        zMesh.position.set(x, 1, z);
+        zMesh.health = 20;
+        scene.add(zMesh);
+        zombies.push(zMesh);
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Move player via joystick
+      const speed = 0.25;
+      player.position.x += game.move.x * speed;
+      player.position.z += game.move.y * speed;
+
+      // Jump
+      if (game.isJumping) {
+        player.position.y = Math.min(player.position.y + 0.18, 1.8);
+        if (player.position.y >= 1.7) game.isJumping = false;
+      } else {
+        if (player.position.y > 1) player.position.y -= 0.1;
+      }
+
+      // Hit
+      if (game.hitPressed) {
+        const range = 2;
+        for (let z of zombies) {
+          const d = player.position.distanceTo(z.position);
+          if (d < range) {
+            z.health -= 15;
+            if (z.health <= 0) {
+              game.hearts += 1;
+              game.coins += 5;
+              scene.remove(z);
+              zombies = zombies.filter(zo => zo !== z);
+            }
+          }
+        }
+      }
+
+      // Simple zombie AI
+      for (let z of zombies) {
+        const dir = new THREE.Vector3().subVectors(player.position, z.position).normalize();
+        z.position.addScaledVector(dir, 0.06);
+        const d = player.position.distanceTo(z.position);
+        if (d < 1.8) {
+          game.health = Math.max(0, game.health - 0.15);
+        }
+      }
+
+      // Camera on player
+      camera.position.copy(player.position);
+      camera.position.y = 5;
+      camera.position.z += 7;
+      camera.lookAt(player.position);
+
+      renderer.render(scene, camera);
+      updateHUD();
+    }
+
+    // --- INPUT: JOYSTICK + BUTTONS ---
+    const stickBase = document.getElementById("stickBase");
+    const stickKnob = document.getElementById("stickKnob");
+    let tracking = false;
+    const radius = 25;
+
+    stickBase.addEventListener("touchstart", e => {
+      e.preventDefault();
+      tracking = true;
+    });
+
+    document.addEventListener("touchmove", e => {
+      if (!tracking) return;
+      e.preventDefault();
+      const rect = stickBase.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const tx = e.touches[0].clientX;
+      const ty = e.touches[0].clientY;
+      let dx = tx - cx;
+      let dy = ty - cy;
+      const len = Math.hypot(dx, dy);
+      if (len > radius) {
+        const ang = Math.atan2(dy, dx);
+        dx = Math.cos(ang) * radius;
+        dy = Math.sin(ang) * radius;
+      }
+      stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+      game.move.x = dx / radius;
+      game.move.y = dy / radius;
+    }, { passive: false });
+
+    document.addEventListener("touchend", () => {
+      tracking = false;
+      game.move.x = 0;
+      game.move.y = 0;
+      stickKnob.style.transform = "translate(0px, 0px)";
+    });
+
+    document.getElementById("hitBtn").addEventListener("touchstart", () => game.hitPressed = true);
+    document.getElementById("hitBtn").addEventListener("touchend", () => game.hitPressed = false);
+    document.getElementById("jumpBtn").addEventListener("touchstart", () => {
+      if (!game.isJumping) game.isJumping = true;
+    });
+
+    // --- MENU BUTTON ---
     document.getElementById("btnStart").addEventListener("click", () => {
       document.getElementById("menuScreen").style.display = "none";
-      window.game.paused = false;
-      initMap();          // comes from map.js
-      initPlayer();       // put in map.js or player.js
-      createZombies();    // comes from zombie.js
-      window.game.isDay = true;
-      updateDayNight();   // comes from zombie.js
-      updateHUD();
-      animate();          // comes from zombie.js
+      createMap();
     });
   </script>
 </body>
