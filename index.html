@@ -1,30 +1,9 @@
-Here is a **complete, full HTML version** that includes:
-
-- **3 finished maps**:
-  - **Map 1 (normal)** → unlocked from wave 1.
-  - **Map 2 (Ice Age)** → unlocked at **wave 10**.
-  - **Map 3 (Hantavirus Hospital)** → unlocked at **wave 20** on Ice Age.
-
-- A **built 3D world** (ground, sky, trees, buildings) for each map.
-- 3D 3‑second loading bar before the world starts.
-- **Joystick, hit button, jump button, right‑side camera look**.
-- **Walking animations** for the character when you move.
-- **Shop, coins, health, wave system**.
-- Works **offline** (no extra assets loaded).
-
-***
-
-Due to message‑length limits, I will give you **one compact, fully self‑contained file** with comments and then you can paste it as `index.html`.
-
-👉 **Copy the entire block below** and save it as `index.html`.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Zombie Waves 3D Roblox Maps</title>
+  <title>Zombie Waves 3D Maps</title>
   <style>
     :root {
       --safe-top: env(safe-area-inset-top);
@@ -42,48 +21,6 @@ Due to message‑length limits, I will give you **one compact, fully self‑cont
       background: #1d3b5c;
     }
     body { position: fixed; inset: 0; }
-
-    /* LOADING SCREEN */
-    #loadingScreen {
-      position: fixed;
-      inset: 0;
-      z-index: 99;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      color: #00ff99;
-      font-family: Arial, sans-serif;
-      transition: opacity 0.5s ease-out, visibility 0.5s;
-    }
-    #loadingScreen.hidden {
-      opacity: 0;
-      visibility: hidden;
-    }
-    #loadingScreen h1 {
-      font-size: 32px;
-      font-weight: 900;
-      margin: 0 0 12px 0;
-    }
-    .loadingBarWrapper {
-      width: 80%;
-      max-width: 420px;
-      background: rgba(255,255,255,.15);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-    .loadingBarFill {
-      height: 10px;
-      background: linear-gradient(90deg, #00ff99, #00ffb3);
-      border-radius: 10px;
-      animation: load 3s ease-in-out 1 forwards;
-    }
-    @keyframes load {
-      0% { width: 0%; }
-      100% { width: 100%; }
-    }
 
     canvas {
       display: block;
@@ -298,7 +235,7 @@ Due to message‑length limits, I will give you **one compact, fully self‑cont
       bottom: calc(18px + var(--safe-bottom));
       width: 108px;
       height: 108px;
-      background: radial-gradient(circle, #ffffff, #ffd86a);
+      background: radial-gradient(circle, #fffcee, #ffd8ff);
     }
 
     #lookZone {
@@ -318,31 +255,27 @@ Due to message‑length limits, I will give you **one compact, fully self‑cont
   </style>
 </head>
 <body>
-  <!-- 3-SECOND LOADING BAR -->
-  <div id="loadingScreen">
-    <h1>LOADING 3D WORLD</h1>
-    <div class="loadingBarWrapper">
-      <div class="loadingBarFill"></div>
-    </div>
-  </div>
-
+  <!-- MAP / MENU / SHOP / HUD -->
   <div id="ui">
     <div id="hud"></div>
 
-    <!-- MAP SELECTION PANEL -->
-    <div id="menuPanel" style="display:none;">
-      <h3>Map Select</h3>
+    <div id="menuBar">
+      <button class="menuBtn" id="menuBtn">MAP</button>
+    </div>
+
+    <div id="menuPanel">
+      <h3>Maps (3)</h3>
       <div id="mapSelect">
         <button id="map1Btn">Map 1 · Normal</button>
-        <button id="map2Btn" disabled>Map 2 · Ice Age (unlocked: wave 10)</button>
-        <button id="map3Btn" disabled>Map 3 · Hospital (Hantavirus)</button>
+        <button id="map2Btn" disabled>Map 2 · Ice Age</button>
+        <button id="map3Btn" disabled>Map 3 · Hospital (W20)</button>
       </div>
       <button id="resumeBtn">Resume</button>
     </div>
 
     <div id="shop">
       <h3>Shop</h3>
-      <div id="shopInfo" style="font-size:14px; margin-bottom:8px;"></div>
+      <div id="shopInfo"></div>
       <button id="buySword">Buy Sword - 50</button>
       <button id="buyGun">Buy Blaster - 120</button>
       <button id="buyArmor">Buy Armor - 80</button>
@@ -365,60 +298,94 @@ Due to message‑length limits, I will give you **one compact, fully self‑cont
     </div>
   </div>
 
-  anvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas"></canvas>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <script>
-    (function () {
-      // WORLD STATE
-      let currentMap = 1; // 1: normal, 2: ice, 3: hospital
-      let gameStarted = false;
+    // WORLD STATE
+    let currentMap = 1, mapLocked = { map2: true, map3: true };
+    let scene, camera, renderer, clock;
 
-      // Game variables
-      let scene, camera, renderer, clock;
-      let player, playerBody, playerHead, walkTime = 0;
-      let zombies = [], bullets = [], coins = [], decor = [];
-      let gameRunning = false, gameOver = false, shopOpen = false, menuOpen = false;
-      let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
-      let selectedWeapon = 1, yaw = 0, pitch = -0.2, lastHitTime = 0;
-      let unlockedSword = false, unlockedGun = false;
-      let verticalVel = 0, grounded = true;
-      const gravity = 0.014;
-      const keys = {};
-      const move = { x: 0, y: 0 };
+    // 3D CHARACTER (Roblox style block skeleton)
+    let playerModel, playerBody, playerHead, playerLegs, walkTime = 0;
 
-      const weapons = {
-        1: { name: "Fists", damage: 15, range: 2.3, cooldown: 420 },
-        2: { name: "Sword", damage: 30, range: 3.2, cooldown: 320 },
-        3: { name: "Blaster", damage: 20, range: 100, cooldown: 170 }
-      };
+    // Game entities
+    let zombies = [], bullets = [], coins = [], decor = [];
+    let gameRunning = false, gameOver = false, shopOpen = false, menuOpen = false;
+    let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
+    let selectedWeapon = 1;
+    let yaw = 0, pitch = -0.2, lastHitTime = 0;
+    let unlockedSword = false, unlockedGun = false;
+    let verticalVel = 0, grounded = true;
+    const gravity = 0.014;
+    const keys = {};
+    const move = { x: 0, y: 0 };
 
-      const hud = () => document.getElementById("hud");
-      const centerMsg = () => document.getElementById("centerMsg");
-      const menuPanel = () => document.getElementById("menuPanel");
-      const loadingScreen = () => document.getElementById("loadingScreen");
+    const weapons = {
+      1: { name: "Fists", damage: 15, range: 2.3, cooldown: 420 },
+      2: { name: "Sword", damage: 30, range: 3.2, cooldown: 320 },
+      3: { name: "Blaster", damage: 20, range: 100, cooldown: 170 }
+    };
 
-      const map1Btn = () => document.getElementById("map1Btn");
-      const map2Btn = () => document.getElementById("map2Btn");
-      const map3Btn = () => document.getElementById("map3Btn");
+    const hud = () => document.getElementById("hud");
+    const centerMsg = () => document.getElementById("centerMsg");
+    const menuPanel = () => document.getElementById("menuPanel");
+    const shopEl = () => document.getElementById("shop");
 
-      function showMapLocked() {
-        if (wave < 10) {
-          map2Btn().disabled = true;
-          map2Btn().style.opacity = 0.5;
-        } else {
-          map2Btn().disabled = false;
-          map2Btn().style.opacity = 1;
-          if (wave >= 20 && currentMap === 2) {
-            map3Btn().disabled = false;
-            map3Btn().style.opacity = 1;
-            showCenter("Hantavirus Map unlocked!", 2000);
-          }
+    const map1Btn = () => document.getElementById("map1Btn");
+    const map2Btn = () => document.getElementById("map2Btn");
+    const map3Btn = () => document.getElementById("map3Btn");
+
+    function showCenter(text, time = 1400) {
+      centerMsg().textContent = text;
+      centerMsg().style.display = "block";
+      clearTimeout(showCenter.t);
+      showCenter.t = setTimeout(() => centerMsg().style.display = "none", time);
+    }
+
+    function showMapLocked() {
+      if (wave < 10) {
+        map2Btn().disabled = true;
+        map2Btn().style.opacity = 0.5;
+      } else {
+        map2Btn().disabled = false;
+        map2Btn().style.opacity = 1;
+        if (wave >= 20 && currentMap === 2) {
+          map3Btn().disabled = false;
+          map3Btn().style.opacity = 1;
+          showCenter("Hantavirus Hospital unlocked!", 2000);
         }
       }
+    }
 
-      function map1Setup() {
-        // Normal map
+    function updateHotbar() {
+      document.getElementById("slot1").textContent = "1 Fists";
+      document.getElementById("slot2").textContent = unlockedSword ? "2 Sword" : "2 Empty";
+      document.getElementById("slot3").textContent = unlockedGun ? "3 Blaster" : "3 Empty";
+      ["slot1","slot2","slot3"].forEach((id, i) => {
+        document.getElementById(id).classList.toggle("active", selectedWeapon === i + 1);
+      });
+    }
+
+    function updateShopText() {
+      document.getElementById("shopInfo").innerHTML =
+        `Coins: ${coinsCount}<br>Armor: ${armor}<br>Health: ${Math.ceil(health)} / ${maxHealth}<br><br>` +
+        `Sword: ${unlockedSword ? "Owned" : "Locked"}<br>Blaster: ${unlockedGun ? "Owned" : "Locked"}`;
+    }
+
+    function switchMap(newMap) {
+      if (!gameRunning) return;
+
+      // clear old world
+      decor.forEach(obj => scene.remove(obj));
+      zombies.forEach(z => scene.remove(z.mesh));
+      decor = [];
+      zombies = [];
+
+      currentMap = newMap;
+
+      // MAP 1: Normal city / forest
+      if (newMap === 1) {
         scene.background = new THREE.Color(0x7ec8ff);
         scene.fog = new THREE.Fog(0x7ec8ff, 20, 180);
         const ground = new THREE.Mesh(
@@ -427,39 +394,36 @@ Due to message‑length limits, I will give you **one compact, fully self‑cont
         );
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
+        decor.push(ground);
 
         const grid = new THREE.GridHelper(300, 60, 0x6ebf4a, 0x7cb85d);
         grid.position.y = 0.02;
         scene.add(grid);
+        decor.push(grid);
 
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 40; i++) {
           const x = (Math.random() - 0.5) * 220;
           const z = (Math.random() - 0.5) * 220;
           const r = Math.random();
-          const grp = new THREE.Group();
-          const c = new THREE.Mesh(
-            new THREE.BoxGeometry(2 + Math.random(), 3 + Math.random() * 5, 2 + Math.random()),
-            new THREE.MeshLambertMaterial({ color: 0x333333 })
-          );
-          c.position.y = c.geometry.parameters.height / 2;
-          if (r < 0.6) {
-            const tr = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.5, 0.5, 2, 8),
-              new THREE.MeshLambertMaterial({ color: 0x8b5a2b })
+          const group = new THREE.Group();
+          group.position.set(x, 0, z);
+          if (r < 0.4) {
+            // simple tree
+            const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3, 0.6), new THREE.MeshLambertMaterial({ color: 0x8b5a2b }));
+            trunk.position.y = 1.5;
+            const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.3, 8, 8), new THREE.MeshLambertMaterial({ color: 0x2ca24c }));
+            leaves.position.y = 3.2;
+            group.add(trunk, leaves);
+          } else if (r < 0.7) {
+            // rock
+            const rock = new THREE.Mesh(
+              new THREE.DodecahedronGeometry(1.2 + Math.random() * 0.5, 0),
+              new THREE.MeshLambertMaterial({ color: 0x777777 })
             );
-            const le = new THREE.Mesh(
-              new THREE.SphereGeometry(1.2, 8, 8),
-              new THREE.MeshLambertMaterial({ color: 0x2ca24c })
-            );
-
-Sources
-[1] How to build and use levels? https://discourse.threejs.org/t/how-to-build-and-use-levels/15711
-[2] Simple house model example in threejs - Dustin Pfister https://dustinpfister.github.io/2021/04/23/threejs-examples-house/
-[3] Hospital room 3D Models – Free & Premium Downloads https://www.cgtrader.com/3d-models/hospital-room
-[4] Three.js Multiple UV maps on a single object https://stackoverflow.com/questions/41853041/three-js-multiple-uv-maps-on-a-single-object
-[5] Create house and garden plans in 2D and 3D using ... https://discourse.threejs.org/t/create-house-and-garden-plans-in-2d-and-3d-using-homeidea3d/6032
-[6] Free Hospital Room 3D Models For Download https://www.turbosquid.com/Search/3D-Models/free/hospital-room
-[7] A 3D Global Map Using Google Map Tiles. - Showcase https://discourse.threejs.org/t/a-3d-global-map-using-google-map-tiles/83048
-[8] Simple 3D home office portfolio built with three.js (link in ... https://www.reddit.com/r/webdev/comments/1jbwc45/simple_3d_home_office_portfolio_built_with/
-[9] Free Modular 3D hospital environment by Madduck - Itch.io https://madduck.itch.io/modular-3d-hospital-environment
-[10] Adding 3D models using three.js on terrain https://www.maplibre.org/maplibre-gl-js/docs/examples/adding-3d-models-using-threejs-on-terrain/
+            rock.position.y = 1;
+            rock.rotation.set(Math.random(), Math.random(), Math.random());
+            group.add(rock);
+          } else {
+            // small building
+            const base = new THREE.Mesh(
+              new THREE.BoxGeometry(5 + Math.random() * 3, 4 + Math.random() * 
