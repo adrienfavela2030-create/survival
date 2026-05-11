@@ -16,13 +16,43 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #7ec8ff;
-      font-family: Arial, Helvetica, sans-serif;
       touch-action: none;
       overscroll-behavior: none;
     }
     body { position: fixed; inset: 0; }
-    canvas { display: block; width: 100vw !important; height: 100vh !important; image-rendering: pixelated; }
+
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: #00ff99;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+    }
+
+    #loadingScreen h1 {
+      font-size: 32px;
+      font-weight: 900;
+      margin: 0 0 12px 0;
+    }
+
+    #loadingScreen p {
+      font-size: 18px;
+      max-width: 520px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw !important;
+      height: 100vh !important;
+      image-rendering: pixelated;
+    }
 
     #ui {
       position: fixed;
@@ -34,8 +64,8 @@
 
     #hud {
       position: absolute;
-      top: calc(10px + var(--safe-top));
-      left: calc(10px + var(--safe-left));
+      top: max(10px, var(--safe-top));
+      left: max(10px, var(--safe-left));
       background: rgba(0,0,0,.55);
       border: 3px solid rgba(255,255,255,.35);
       border-radius: 14px;
@@ -45,12 +75,11 @@
       line-height: 1.35;
       text-shadow: 0 2px 0 #000;
       pointer-events: none;
-      min-width: 175px;
     }
 
     #menuBar {
       position: absolute;
-      top: calc(10px + var(--safe-top));
+      top: max(10px, var(--safe-top));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -100,8 +129,8 @@
 
     #shop {
       position: absolute;
-      right: calc(10px + var(--safe-right));
-      top: calc(10px + var(--safe-top));
+      right: max(10px, var(--safe-right));
+      top: max(10px, var(--safe-top));
       width: min(320px, calc(100vw - 24px));
       background: rgba(0,0,0,.78);
       border: 3px solid #ffd54a;
@@ -146,7 +175,7 @@
     #hotbar {
       position: absolute;
       left: 50%;
-      bottom: calc(14px + var(--safe-bottom));
+      bottom: max(14px, var(--safe-bottom));
       transform: translateX(-50%);
       display: flex;
       gap: 10px;
@@ -182,8 +211,8 @@
 
     #stickBase {
       position: absolute;
-      left: calc(14px + var(--safe-left));
-      bottom: calc(14px + var(--safe-bottom));
+      left: max(14px, var(--safe-left));
+      bottom: max(14px, var(--safe-bottom));
       width: 180px;
       height: 180px;
       border-radius: 50%;
@@ -203,38 +232,36 @@
       border: 3px solid #000;
     }
 
-    #jumpBtn {
+    .touchBtn {
       position: absolute;
-      right: calc(16px + var(--safe-right));
+      border-radius: 50%;
+      border: 5px solid #000;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: 0 6px 0 rgba(0,0,0,.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #jumpBtn {
+      right: calc(58px + var(--safe-right));
       bottom: calc(18px + var(--safe-bottom));
       width: 108px;
       height: 108px;
-      border-radius: 50%;
-      border: 5px solid #000;
       background: radial-gradient(circle, #ffffff, #ffd86a);
-      color: #111;
-      font-size: 18px;
-      font-weight: 900;
-      pointer-events: auto;
-      touch-action: manipulation;
-      box-shadow: 0 6px 0 rgba(0,0,0,.35);
     }
 
-    #actionBtn {
-      position: absolute;
-      left: calc(16px + var(--safe-left));
-      bottom: calc(210px + var(--safe-bottom));
-      width: 104px;
-      height: 104px;
-      border-radius: 50%;
-      border: 5px solid #000;
-      background: radial-gradient(circle, #ffb35c, #ff5e00);
-      color: white;
-      font-size: 18px;
-      font-weight: 900;
-      pointer-events: auto;
-      touch-action: manipulation;
-      box-shadow: 0 6px 0 rgba(0,0,0,.35);
+    #hitBtn {
+      left: max(16px, var(--safe-left));
+      bottom: max(18px, var(--safe-bottom));
+      width: 108px;
+      height: 108px;
+      background: radial-gradient(circle, #ff9b3d, #ff4a00);
     }
 
     #lookZone {
@@ -249,7 +276,7 @@
     #rotateScreen {
       position: fixed;
       inset: 0;
-      z-index: 20;
+      z-index: 15;
       display: none;
       align-items: center;
       justify-content: center;
@@ -274,12 +301,23 @@
       #lookZone { left: 34%; width: 66%; }
       .slot { width: 94px; height: 54px; font-size: 12px; }
       #stickBase { width: 160px; height: 160px; }
-      #actionBtn { width: 92px; height: 92px; bottom: calc(204px + var(--safe-bottom)); }
+      #hitBtn { width: 96px; height: 96px; bottom: calc(18px + var(--safe-bottom)); }
       #jumpBtn { width: 96px; height: 96px; }
+    }
+
+    .touchBtn:active, .touchBtn:touch {
+      transform: scale(0.94);
+      box-shadow: 0 4px 0 rgba(0,0,0,.35);
+      transition: transform 0.08s ease-in-out, box-shadow 0.08s ease-in-out;
     }
   </style>
 </head>
 <body>
+  <div id="loadingScreen">
+    <h1>LOADING MAP</h1>
+    <p>Initializing world, zombies, and shop.</p>
+  </div>
+
   <div id="rotateScreen">
     <div id="rotateArrow">↻</div>
     <div style="font-size: 30px; font-weight: 900; color:#00ff99;">Rotate to landscape</div>
@@ -320,16 +358,18 @@
 
     <div id="touchUI">
       <div id="stickBase"><div id="stickKnob"></div></div>
-      <button id="actionBtn">HIT</button>
-      <button id="jumpBtn">JUMP</button>
+      <button id="hitBtn" class="touchBtn">HIT</button>
+      <button id="jumpBtn" class="touchBtn">JUMP</button>
       <div id="lookZone"></div>
     </div>
   </div>
 
+  <canvas id="gameCanvas"></canvas>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <script>
     let scene, camera, renderer, clock;
-    let player, playerHead, playerShoulders, playerBody, playerLegs;
+    let player, playerHead, playerBody, playerLegs;
     let zombies = [], bullets = [], coins = [], decor = [];
     let gameRunning = false, gameOver = false, shopOpen = false, menuOpen = false;
     let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
@@ -351,13 +391,15 @@
     const shopEl = () => document.getElementById("shop");
     const rotateScreen = () => document.getElementById("rotateScreen");
     const menuPanel = () => document.getElementById("menuPanel");
+    const loadingScreen = () => document.getElementById("loadingScreen");
 
     function zombieStats() {
       return { health: 25 + wave * 10, speed: 0.28 + wave * 0.032, damage: 6 + wave * 2 };
     }
 
     function updateOrientationUI() {
-      rotateScreen().style.display = window.innerHeight > window.innerWidth ? "flex" : "none";
+      const isPortrait = window.innerHeight > window.innerWidth;
+      rotateScreen().style.display = isPortrait ? "flex" : "none";
     }
 
     function showCenter(text, time = 1400) {
@@ -401,38 +443,4 @@
     }
 
     function setWeapon(id) {
-      if (id === 2 && !unlockedSword) return;
-      if (id === 3 && !unlockedGun) return;
-      selectedWeapon = id;
-      updateHotbar();
-      updateMenuText();
-    }
-
-    function buyWeapon(id, price) {
-      if (coinsCount < price) return showCenter("Not enough coins");
-      if (id === 2) unlockedSword = true;
-      if (id === 3) unlockedGun = true;
-      coinsCount -= price;
-      setWeapon(id);
-      updateHotbar();
-      updateShopText();
-      updateMenuText();
-    }
-
-    function buyArmorItem() {
-      const price = 80;
-      if (coinsCount < price) return showCenter("Not enough coins");
-      coinsCount -= price;
-      armor += 20;
-      maxHealth += 20;
-      health += 20;
-      updateShopText();
-      updateMenuText();
-    }
-
-    function startGame() {
-      if (gameRunning) return;
-      gameRunning = true;
-      showCenter("Welcome!");
-      spawnWave();
-   
+     
