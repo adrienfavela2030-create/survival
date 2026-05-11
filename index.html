@@ -3,55 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Zombie Waves Mobile</title>
+  <title>Zombie Waves Roblox Mobile</title>
   <style>
-    :root {
-      --ui-scale: 1;
-    }
-
+    :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); --safe-right: env(safe-area-inset-right); }
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #05060a;
-      font-family: "Arial Black", Arial, sans-serif;
+      background: #7ec8ff;
+      font-family: Arial, Helvetica, sans-serif;
       touch-action: none;
       overscroll-behavior: none;
     }
-
-    body {
-      position: fixed;
-      inset: 0;
-    }
-
-    canvas {
-      display: block;
-      width: 100vw !important;
-      height: 100vh !important;
-      image-rendering: pixelated;
-    }
+    body { position: fixed; inset: 0; }
+    canvas { display: block; width: 100vw !important; height: 100vh !important; image-rendering: pixelated; }
 
     #ui {
       position: fixed;
       inset: 0;
-      color: #fff;
       pointer-events: none;
+      z-index: 5;
+      color: #fff;
     }
 
     #hud {
       position: absolute;
-      top: max(10px, env(safe-area-inset-top));
-      left: max(10px, env(safe-area-inset-left));
-      background: rgba(0,0,0,.82);
-      border: 3px solid #00ff99;
-      box-shadow: 0 0 12px rgba(0,255,153,.35);
+      top: calc(10px + var(--safe-top));
+      left: calc(10px + var(--safe-left));
+      background: rgba(0,0,0,.55);
+      border: 3px solid rgba(255,255,255,.35);
+      border-radius: 14px;
       padding: 10px 12px;
-      border-radius: 12px;
-      font-size: 15px;
+      font-weight: 800;
+      font-size: 14px;
       line-height: 1.35;
       text-shadow: 0 2px 0 #000;
-      z-index: 5;
+      pointer-events: none;
+      min-width: 175px;
+    }
+
+    #menuBar {
+      position: absolute;
+      top: calc(10px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .menuBtn {
+      border: 3px solid #000;
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: linear-gradient(#ffd66d, #ff9d1e);
+      color: #000;
+      font-weight: 900;
+      font-size: 15px;
+      box-shadow: 0 4px 0 rgba(0,0,0,.3);
+      touch-action: manipulation;
+    }
+
+    #menuPanel {
+      position: absolute;
+      top: calc(60px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(360px, calc(100vw - 24px));
+      background: rgba(255,255,255,.95);
+      border: 4px solid #1d3b5c;
+      border-radius: 18px;
+      padding: 12px;
+      display: none;
+      pointer-events: auto;
+      color: #111;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+
+    #menuPanel h3 { margin: 0 0 8px 0; }
+    #menuPanel button {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      border: 3px solid #000;
+      border-radius: 12px;
+      background: linear-gradient(#8eff9a, #31cc5d);
+      font-weight: 900;
+      font-size: 15px;
+    }
+
+    #shop {
+      position: absolute;
+      right: calc(10px + var(--safe-right));
+      top: calc(10px + var(--safe-top));
+      width: min(320px, calc(100vw - 24px));
+      background: rgba(0,0,0,.78);
+      border: 3px solid #ffd54a;
+      border-radius: 16px;
+      box-shadow: 0 0 14px rgba(255,213,74,.22);
+      padding: 12px;
+      display: none;
+      pointer-events: auto;
+    }
+
+    #shop h3 { margin: 0 0 8px 0; color: #ffd54a; }
+    #shop button {
+      width: 100%;
+      margin: 6px 0;
+      padding: 12px;
+      border: 3px solid #000;
+      border-radius: 12px;
+      background: linear-gradient(#ff7b7b, #d72d2d);
+      color: white;
+      font-weight: 900;
+      font-size: 15px;
+      touch-action: manipulation;
     }
 
     #centerMsg {
@@ -59,79 +126,41 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,.88);
+      background: rgba(0,0,0,.82);
       border: 3px solid #ff4df2;
-      padding: 14px 20px;
-      border-radius: 14px;
-      display: none;
+      border-radius: 16px;
+      padding: 14px 18px;
       text-align: center;
+      display: none;
+      pointer-events: none;
+      font-size: 18px;
       text-shadow: 0 2px 0 #000;
       max-width: 92vw;
-      font-size: 18px;
-      z-index: 8;
-      pointer-events: none;
-    }
-
-    #shop {
-      position: absolute;
-      right: max(12px, env(safe-area-inset-right));
-      top: max(12px, env(safe-area-inset-top));
-      width: min(340px, calc(100vw - 24px));
-      background: rgba(0,0,0,.84);
-      border: 3px solid #ffd54a;
-      box-shadow: 0 0 14px rgba(255,213,74,.25);
-      padding: 14px;
-      border-radius: 14px;
-      display: none;
-      pointer-events: auto;
-      z-index: 6;
-    }
-
-    #shop h3 {
-      margin: 0 0 10px 0;
-      color: #ffd54a;
-      font-size: 22px;
-    }
-
-    #shop button, #startBtn {
-      width: 100%;
-      margin: 8px 0;
-      padding: 14px;
-      border: 3px solid #000;
-      border-radius: 12px;
-      background: linear-gradient(#ff6b6b, #cc2b2b);
-      color: #fff;
-      font-weight: 900;
-      font-size: 17px;
-      cursor: pointer;
-      box-shadow: 0 4px 0 #7a1010;
-      pointer-events: auto;
-      touch-action: manipulation;
     }
 
     #hotbar {
       position: absolute;
       left: 50%;
-      bottom: max(16px, env(safe-area-inset-bottom));
+      bottom: calc(14px + var(--safe-bottom));
       transform: translateX(-50%);
       display: flex;
       gap: 10px;
       pointer-events: none;
-      z-index: 5;
+      z-index: 6;
     }
 
     .slot {
-      width: 105px;
-      height: 58px;
+      width: 110px;
+      height: 60px;
+      border-radius: 14px;
       border: 4px solid rgba(255,255,255,.35);
-      background: rgba(0,0,0,.78);
-      border-radius: 12px;
+      background: rgba(0,0,0,.6);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-weight: 900;
       font-size: 13px;
       text-align: center;
-      box-shadow: 0 0 0 2px rgba(0,0,0,.4) inset;
     }
 
     .slot.active {
@@ -139,137 +168,130 @@
       box-shadow: 0 0 14px rgba(255,234,0,.5);
     }
 
-    #overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle, rgba(33,10,60,.22), rgba(0,0,0,.94));
-      color: #fff;
-      text-align: center;
-      z-index: 10;
-    }
-
-    #overlay .card {
-      width: min(760px, 94vw);
-      background: rgba(0,0,0,.84);
-      border: 4px solid #00ff99;
-      box-shadow: 0 0 24px rgba(0,255,153,.2);
-      border-radius: 18px;
-      padding: 26px;
-    }
-
-    #overlay h1 {
-      margin: 0 0 12px 0;
-      color: #00ff99;
-      font-size: 36px;
-    }
-
-    #overlay p {
-      margin: 10px 0 18px 0;
-      font-size: 18px;
-      line-height: 1.5;
-    }
-
     #touchUI {
       position: absolute;
       inset: 0;
-      display: block;
       pointer-events: none;
-      z-index: 7;
+      display: block;
     }
 
     #stickBase {
       position: absolute;
-      left: max(16px, env(safe-area-inset-left));
-      bottom: max(16px, env(safe-area-inset-bottom));
-      width: 176px;
-      height: 176px;
+      left: calc(14px + var(--safe-left));
+      bottom: calc(14px + var(--safe-bottom));
+      width: 180px;
+      height: 180px;
       border-radius: 50%;
-      background: rgba(0,0,0,.38);
-      border: 5px solid rgba(255,255,255,.26);
+      background: rgba(255,255,255,.18);
+      border: 5px solid rgba(0,0,0,.25);
       pointer-events: auto;
     }
 
     #stickKnob {
       position: absolute;
-      left: 60px;
-      top: 60px;
+      left: 62px;
+      top: 62px;
       width: 56px;
       height: 56px;
       border-radius: 50%;
-      background: linear-gradient(#00e5ff, #006dff);
+      background: linear-gradient(#59d6ff, #0d6cff);
       border: 3px solid #000;
     }
 
-    .touchBtn {
+    #jumpBtn {
       position: absolute;
+      right: calc(16px + var(--safe-right));
+      bottom: calc(18px + var(--safe-bottom));
+      width: 108px;
+      height: 108px;
       border-radius: 50%;
       border: 5px solid #000;
-      color: #fff;
-      font-weight: 900;
+      background: radial-gradient(circle, #ffffff, #ffd86a);
+      color: #111;
       font-size: 18px;
-      text-shadow: 0 2px 0 #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-weight: 900;
       pointer-events: auto;
-      user-select: none;
-      box-shadow: 0 6px 0 rgba(0,0,0,.35);
       touch-action: manipulation;
+      box-shadow: 0 6px 0 rgba(0,0,0,.35);
     }
 
-    #attackBtn {
-      right: max(18px, env(safe-area-inset-right));
-      bottom: max(18px, env(safe-area-inset-bottom));
-      width: 118px;
-      height: 118px;
-      background: radial-gradient(circle, #ff9b3d, #ff4a00);
-    }
-
-    #shopBtn {
-      right: 156px;
-      bottom: 36px;
-      width: 88px;
-      height: 88px;
-      background: radial-gradient(circle, #ffe56e, #d49a00);
+    #actionBtn {
+      position: absolute;
+      left: calc(16px + var(--safe-left));
+      bottom: calc(210px + var(--safe-bottom));
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      border: 5px solid #000;
+      background: radial-gradient(circle, #ffb35c, #ff5e00);
+      color: white;
+      font-size: 18px;
+      font-weight: 900;
+      pointer-events: auto;
+      touch-action: manipulation;
+      box-shadow: 0 6px 0 rgba(0,0,0,.35);
     }
 
     #lookZone {
       position: absolute;
-      right: 0;
+      left: 38%;
       top: 0;
-      width: 58vw;
-      height: 100vh;
+      width: 62%;
+      height: 100%;
       pointer-events: auto;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #7ec8ff 0%, #b6f0ff 50%, #8cd76f 100%);
+      color: #0f2c4d;
+      text-align: center;
+    }
+
+    #loading .card {
+      width: min(520px, 92vw);
+      background: rgba(255,255,255,.72);
+      border: 4px solid #1d3b5c;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.15);
     }
 
     #rotateScreen {
       position: fixed;
       inset: 0;
-      z-index: 50;
+      z-index: 30;
       display: none;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
       background: #000;
       color: #fff;
       text-align: center;
       padding: 24px;
-      flex-direction: column;
-      gap: 16px;
     }
 
     #rotateArrow {
       font-size: 96px;
-      line-height: 1;
       color: #00ff99;
       animation: spin 1.2s linear infinite;
+      line-height: 1;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      #touchUI { display: block; }
+      #lookZone { left: 34%; width: 66%; }
+      .slot { width: 94px; height: 54px; font-size: 12px; }
+      #stickBase { width: 160px; height: 160px; }
+      #actionBtn { width: 92px; height: 92px; bottom: calc(204px + var(--safe-bottom)); }
+      #jumpBtn { width: 96px; height: 96px; }
     }
   </style>
 </head>
@@ -277,34 +299,41 @@
   <div id="rotateScreen">
     <div id="rotateArrow">↻</div>
     <div style="font-size: 30px; font-weight: 900; color:#00ff99;">Rotate to landscape</div>
-    <div style="font-size: 18px; max-width: 520px; line-height:1.5;">
-      This game is made for iPhone and iPad in horizontal mode.
-    </div>
+    <div style="font-size: 18px; max-width: 520px; line-height:1.5;">This Roblox-style game is built for horizontal play.</div>
   </div>
 
-  <div id="overlay">
+  <div id="loading">
     <div class="card">
-      <h1>Zombie Waves Mobile</h1>
-      <p>
-        Tap start to play.<br>
-        Use the joystick to move, attack button to hit, and shop to buy upgrades.
-      </p>
-      <button id="startBtn">Start Game</button>
+      <h1 style="margin:0 0 10px 0;">Joining world...</h1>
+      <p style="margin:0; font-size:18px; line-height:1.5;">Generating map, trees, rocks, buildings, and zombies.</p>
     </div>
   </div>
 
   <div id="ui">
     <div id="hud"></div>
-    <div id="centerMsg"></div>
+
+    <div id="menuBar">
+      <button class="menuBtn" id="menuBtn">MENU</button>
+    </div>
+
+    <div id="menuPanel">
+      <h3>Menu</h3>
+      <div style="font-size:14px; line-height:1.45;" id="menuInfo"></div>
+      <button id="resumeBtn">Resume</button>
+      <button id="shopOpenBtn">Open Shop</button>
+      <button id="restartBtn">Restart</button>
+    </div>
 
     <div id="shop">
-      <h3>SHOP</h3>
+      <h3>Shop</h3>
       <div id="shopInfo" style="font-size:14px; margin-bottom:8px;"></div>
       <button id="buySword">Buy Sword - 50</button>
       <button id="buyGun">Buy Blaster - 120</button>
       <button id="buyArmor">Buy Armor - 80</button>
       <button id="closeShop">Close</button>
     </div>
+
+    <div id="centerMsg"></div>
 
     <div id="hotbar">
       <div class="slot active" id="slot1">1 Fists</div>
@@ -314,8 +343,8 @@
 
     <div id="touchUI">
       <div id="stickBase"><div id="stickKnob"></div></div>
-      <div id="shopBtn" class="touchBtn">SHOP</div>
-      <div id="attackBtn" class="touchBtn">HIT</div>
+      <button id="actionBtn">HIT</button>
+      <button id="jumpBtn">JUMP</button>
       <div id="lookZone"></div>
     </div>
   </div>
@@ -323,11 +352,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <script>
     let scene, camera, renderer, clock, player;
-    let zombies = [], bullets = [], coins = [];
-    let gameRunning = false, gameOver = false, shopOpen = false;
+    let zombies = [], bullets = [], coins = [], decor = [];
+    let gameRunning = false, gameOver = false, shopOpen = false, menuOpen = false;
     let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
-    let selectedWeapon = 1, yaw = 0, pitch = 0, lastHitTime = 0;
+    let selectedWeapon = 1, yaw = 0, pitch = -0.2, lastHitTime = 0;
     let unlockedSword = false, unlockedGun = false;
+    let verticalVel = 0, grounded = true;
+    const gravity = 0.014;
     const keys = {};
     const move = { x: 0, y: 0 };
 
@@ -339,16 +370,16 @@
 
     const hud = () => document.getElementById("hud");
     const centerMsg = () => document.getElementById("centerMsg");
-    const shop = () => document.getElementById("shop");
+    const shopEl = () => document.getElementById("shop");
     const rotateScreen = () => document.getElementById("rotateScreen");
+    const menuPanel = () => document.getElementById("menuPanel");
 
     function zombieStats() {
-      return { health: 25 + wave * 10, speed: 0.30 + wave * 0.035, damage: 6 + wave * 2 };
+      return { health: 25 + wave * 10, speed: 0.28 + wave * 0.032, damage: 6 + wave * 2 };
     }
 
     function updateOrientationUI() {
-      const isPortrait = window.innerHeight > window.innerWidth;
-      rotateScreen().style.display = isPortrait ? "flex" : "none";
+      rotateScreen().style.display = window.innerHeight > window.innerWidth ? "flex" : "none";
     }
 
     function showCenter(text, time = 1400) {
@@ -373,10 +404,21 @@
         `Sword: ${unlockedSword ? "Owned" : "Locked"}<br>Blaster: ${unlockedGun ? "Owned" : "Locked"}`;
     }
 
+    function updateMenuText() {
+      document.getElementById("menuInfo").innerHTML =
+        `Wave: ${wave}<br>Kills: ${kills}<br>Coins: ${coinsCount}<br>Weapon: ${weapons[selectedWeapon].name}`;
+    }
+
+    function toggleMenu(state) {
+      menuOpen = state;
+      menuPanel().style.display = menuOpen ? "block" : "none";
+      if (menuOpen) updateMenuText();
+    }
+
     function toggleShop(state) {
       if (!gameRunning || gameOver) return;
       shopOpen = state;
-      shop().style.display = shopOpen ? "block" : "none";
+      shopEl().style.display = shopOpen ? "block" : "none";
       updateShopText();
     }
 
@@ -385,6 +427,7 @@
       if (id === 3 && !unlockedGun) return;
       selectedWeapon = id;
       updateHotbar();
+      updateMenuText();
     }
 
     function buyWeapon(id, price) {
@@ -395,6 +438,7 @@
       setWeapon(id);
       updateHotbar();
       updateShopText();
+      updateMenuText();
     }
 
     function buyArmorItem() {
@@ -405,37 +449,102 @@
       maxHealth += 20;
       health += 20;
       updateShopText();
+      updateMenuText();
     }
 
     function startGame() {
       if (gameRunning) return;
       gameRunning = true;
-      showCenter("FIGHT!");
+      document.getElementById("loading").style.display = "none";
+      showCenter("Welcome!");
+      spawnWave();
     }
 
-    function resetGame() {
+    function restartAll() {
       zombies.forEach(z => scene.remove(z.mesh));
       bullets.forEach(b => scene.remove(b));
       coins.forEach(c => scene.remove(c));
-      zombies = []; bullets = []; coins = [];
+      decor.forEach(d => scene.remove(d));
+      zombies = []; bullets = []; coins = []; decor = [];
       wave = 1; kills = 0; coinsCount = 0; health = 100; maxHealth = 100; armor = 0;
       unlockedSword = false; unlockedGun = false;
-      selectedWeapon = 1; gameOver = false; shopOpen = false;
-      document.getElementById("shop").style.display = "none";
+      selectedWeapon = 1; gameOver = false; shopOpen = false; menuOpen = false;
+      shopEl().style.display = "none";
+      menuPanel().style.display = "none";
       updateHotbar();
       updateShopText();
+      updateMenuText();
+      generateWorld();
       spawnWave();
-      showCenter("RESTARTED");
+      showCenter("Restarted");
     }
 
     function randomSpawnPoint() {
-      const radius = 18 + Math.random() * 22;
+      const radius = 20 + Math.random() * 25;
       const angle = Math.random() * Math.PI * 2;
       return new THREE.Vector3(
         player.position.x + Math.cos(angle) * radius,
         1,
         player.position.z + Math.sin(angle) * radius
       );
+    }
+
+    function makeTree(x, z) {
+      const group = new THREE.Group();
+      const trunk = new THREE.Mesh(
+        new THREE.BoxGeometry(0.7, 3, 0.7),
+        new THREE.MeshLambertMaterial({ color: 0x8b5a2b })
+      );
+      trunk.position.y = 1.5;
+      const leaves = new THREE.Mesh(
+        new THREE.SphereGeometry(1.4, 8, 8),
+        new THREE.MeshLambertMaterial({ color: 0x2ca24c })
+      );
+      leaves.position.y = 3.3;
+      group.add(trunk, leaves);
+      group.position.set(x, 0, z);
+      scene.add(group);
+      decor.push(group);
+    }
+
+    function makeRock(x, z) {
+      const rock = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(1.1 + Math.random() * 0.8, 0),
+        new THREE.MeshLambertMaterial({ color: 0x777777 })
+      );
+      rock.position.set(x, 1, z);
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      scene.add(rock);
+      decor.push(rock);
+    }
+
+    function makeBuilding(x, z) {
+      const group = new THREE.Group();
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(5 + Math.random() * 4, 5 + Math.random() * 5, 5 + Math.random() * 4),
+        new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(Math.random() * 0.15 + 0.55, 0.55, 0.6) })
+      );
+      base.position.y = base.geometry.parameters.height / 2;
+      const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(base.geometry.parameters.width + 0.3, 0.8, base.geometry.parameters.depth + 0.3),
+        new THREE.MeshLambertMaterial({ color: 0x3a2a22 })
+      );
+      roof.position.y = base.geometry.parameters.height + 0.4;
+      group.add(base, roof);
+      group.position.set(x, 0, z);
+      scene.add(group);
+      decor.push(group);
+    }
+
+    function generateWorld() {
+      for (let i = 0; i < 40; i++) {
+        const x = (Math.random() - 0.5) * 220;
+        const z = (Math.random() - 0.5) * 220;
+        const r = Math.random();
+        if (r < 0.45) makeTree(x, z);
+        else if (r < 0.75) makeRock(x, z);
+        else makeBuilding(x, z);
+      }
     }
 
     function spawnWave() {
@@ -450,12 +559,13 @@
         scene.add(m);
         zombies.push({ mesh: m, health: s.health, speed: s.speed, damage: s.damage, attackCd: 0, dead: false });
       }
-      showCenter(`WAVE ${wave}`);
+      showCenter(`Wave ${wave}`);
+      updateMenuText();
     }
 
     function nextWave() {
       wave++;
-      showCenter(`WAVE ${wave} START!`);
+      showCenter(`Wave ${wave} starts!`);
       spawnWave();
     }
 
@@ -465,9 +575,10 @@
       if (health <= 0) {
         health = 0;
         gameOver = true;
-        showCenter("YOU DIED - TAP START TO RESTART", 999999);
+        showCenter("You died. Open menu to restart.", 999999);
       }
       updateShopText();
+      updateMenuText();
     }
 
     function damageZombie(z, amount) {
@@ -493,10 +604,11 @@
       coins.push(coin);
       scene.add(coin);
       zombies = zombies.filter(x => !x.dead);
+      updateMenuText();
     }
 
     function attack() {
-      if (!gameRunning || shopOpen || gameOver) return;
+      if (!gameRunning || shopOpen || gameOver || menuOpen) return;
       const now = performance.now();
       const w = weapons[selectedWeapon];
       if (now - lastHitTime < w.cooldown) return;
@@ -536,12 +648,12 @@
 
     function init() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x10131f);
-      scene.fog = new THREE.Fog(0x10131f, 18, 100);
+      scene.background = new THREE.Color(0x7ec8ff);
+      scene.fog = new THREE.Fog(0x7ec8ff, 20, 180);
 
       camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.15));
       renderer.setSize(innerWidth, innerHeight);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.domElement.style.width = "100vw";
@@ -550,88 +662,74 @@
       document.body.appendChild(renderer.domElement);
       clock = new THREE.Clock();
 
-      const light = new THREE.DirectionalLight(0xffffff, 1.2);
-      light.position.set(10, 18, 8);
-      scene.add(light);
-      scene.add(new THREE.AmbientLight(0x8fb3ff, 0.45));
+      const sun = new THREE.DirectionalLight(0xffffff, 1.35);
+      sun.position.set(10, 18, 8);
+      scene.add(sun);
+      scene.add(new THREE.AmbientLight(0xbadfff, 0.65));
 
       const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(500, 500),
-        new THREE.MeshLambertMaterial({ color: 0x24301f })
+        new THREE.MeshLambertMaterial({ color: 0x85c964 })
       );
       ground.rotation.x = -Math.PI / 2;
       scene.add(ground);
 
-      const grid = new THREE.GridHelper(500, 80, 0x00ff99, 0x223322);
-      grid.position.y = 0.01;
+      const grid = new THREE.GridHelper(500, 100, 0x6ebf4a, 0x7cb85d);
+      grid.position.y = 0.02;
       scene.add(grid);
 
       player = new THREE.Mesh(
         new THREE.BoxGeometry(1, 2, 1),
-        new THREE.MeshLambertMaterial({ color: 0xf2f2f2 })
+        new THREE.MeshLambertMaterial({ color: 0xffffff })
       );
       player.position.set(0, 1, 0);
       scene.add(player);
 
-      for (let i = 0; i < 20; i++) {
-        const c = new THREE.Mesh(
-          new THREE.BoxGeometry(2 + Math.random() * 2, 3 + Math.random() * 5, 2 + Math.random() * 2),
-          new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.4, 0.35) })
-        );
-        const a = Math.random() * Math.PI * 2;
-        const d = 28 + Math.random() * 35;
-        c.position.set(Math.cos(a) * d, c.geometry.parameters.height / 2, Math.sin(a) * d);
-        scene.add(c);
-      }
-
+      generateWorld();
       bindEvents();
       updateOrientationUI();
       updateHotbar();
       updateShopText();
+      updateMenuText();
       animate();
+      startGame();
     }
 
     function bindEvents() {
-      const startButton = document.getElementById("startBtn");
-      const startHandler = (e) => {
-        e.preventDefault();
-        document.getElementById("overlay").style.display = "none";
-        startGame();
-      };
-      startButton.addEventListener("pointerdown", startHandler);
-      startButton.addEventListener("touchstart", startHandler, { passive: false });
-      startButton.addEventListener("click", startHandler);
+      document.getElementById("menuBtn").onclick = () => toggleMenu(!menuOpen);
+      document.getElementById("resumeBtn").onclick = () => toggleMenu(false);
+      document.getElementById("shopOpenBtn").onclick = () => { toggleMenu(false); toggleShop(true); };
+      document.getElementById("restartBtn").onclick = () => restartAll();
+
+      document.getElementById("closeShop").onclick = () => toggleShop(false);
+      document.getElementById("buySword").onclick = () => buyWeapon(2, 50);
+      document.getElementById("buyGun").onclick = () => buyWeapon(3, 120);
+      document.getElementById("buyArmor").onclick = buyArmorItem;
+
+      document.getElementById("actionBtn").onclick = attack;
+      document.getElementById("jumpBtn").onclick = () => { if (grounded && gameRunning && !menuOpen && !shopOpen) verticalVel = 0.24; };
 
       document.addEventListener("keydown", e => {
         keys[e.key.toLowerCase()] = true;
         if (e.key === "1") setWeapon(1);
         if (e.key === "2") setWeapon(2);
         if (e.key === "3") setWeapon(3);
+        if (e.key.toLowerCase() === "m") toggleMenu(!menuOpen);
         if (e.key.toLowerCase() === "b") toggleShop(!shopOpen);
-        if (e.key.toLowerCase() === "h") {
-          if (!gameRunning) startGame();
-          else if (gameOver) resetGame();
-        }
+        if (e.key === " ") verticalVel = 0.24;
       });
       document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
       document.addEventListener("mousemove", e => {
-        if (!gameRunning || shopOpen || gameOver) return;
+        if (!gameRunning || shopOpen || menuOpen || gameOver) return;
         yaw -= e.movementX * 0.0025;
         pitch -= e.movementY * 0.0025;
-        pitch = Math.max(-1.05, Math.min(1.05, pitch));
+        pitch = Math.max(-1.1, Math.min(0.35, pitch));
       });
-      document.addEventListener("mousedown", attack);
 
+      document.addEventListener("mousedown", attack);
       window.addEventListener("resize", onResize);
       window.addEventListener("orientationchange", updateOrientationUI);
-
-      document.getElementById("closeShop").onclick = () => toggleShop(false);
-      document.getElementById("buySword").onclick = () => buyWeapon(2, 50);
-      document.getElementById("buyGun").onclick = () => buyWeapon(3, 120);
-      document.getElementById("buyArmor").onclick = buyArmorItem;
-      document.getElementById("attackBtn").onclick = attack;
-      document.getElementById("shopBtn").onclick = () => toggleShop(!shopOpen);
 
       const stickBase = document.getElementById("stickBase");
       const stickKnob = document.getElementById("stickKnob");
@@ -672,7 +770,9 @@
       });
 
       let looking = false, lastTouchX = 0, lastTouchY = 0;
-      document.getElementById("lookZone").addEventListener("touchstart", e => {
+      const lookZone = document.getElementById("lookZone");
+
+      lookZone.addEventListener("touchstart", e => {
         if (e.touches.length !== 1) return;
         looking = true;
         lastTouchX = e.touches[0].clientX;
@@ -682,11 +782,9 @@
       document.addEventListener("touchmove", e => {
         if (!looking || e.touches.length !== 1) return;
         const t = e.touches[0];
-        const dx = t.clientX - lastTouchX;
-        const dy = t.clientY - lastTouchY;
-        yaw -= dx * 0.004;
-        pitch -= dy * 0.004;
-        pitch = Math.max(-1.05, Math.min(1.05, pitch));
+        yaw -= (t.clientX - lastTouchX) * 0.004;
+        pitch -= (t.clientY - lastTouchY) * 0.004;
+        pitch = Math.max(-1.1, Math.min(0.35, pitch));
         lastTouchX = t.clientX;
         lastTouchY = t.clientY;
         e.preventDefault();
@@ -706,8 +804,8 @@
       requestAnimationFrame(animate);
       const dt = clock.getDelta();
 
-      if (gameRunning && !gameOver && !shopOpen) {
-        const speed = 0.11;
+      if (gameRunning && !gameOver && !shopOpen && !menuOpen) {
+        const speed = 0.12;
         const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
         const right = new THREE.Vector3(forward.z, 0, -forward.x);
 
@@ -716,12 +814,19 @@
         if (keys["a"]) player.position.addScaledVector(right, -speed);
         if (keys["d"]) player.position.addScaledVector(right, speed);
 
-        player.position.addScaledVector(forward, move.y * -0.10);
-        player.position.addScaledVector(right, move.x * 0.10);
-        player.position.y = 1;
+        player.position.addScaledVector(forward, move.y * -0.11);
+        player.position.addScaledVector(right, move.x * 0.11);
+
+        verticalVel -= gravity;
+        player.position.y += verticalVel;
+        if (player.position.y <= 1) {
+          player.position.y = 1;
+          verticalVel = 0;
+          grounded = true;
+        } else grounded = false;
 
         camera.position.copy(player.position);
-        camera.position.y = 1.7;
+        camera.position.y = player.position.y + 1.45;
         camera.rotation.set(pitch, yaw, 0, "YXZ");
 
         zombies.forEach(z => {
@@ -750,7 +855,7 @@
               break;
             }
           }
-          if (b && b.position.distanceTo(player.position) > 120) {
+          if (b && b.position.distanceTo(player.position) > 140) {
             scene.remove(b);
             bullets.splice(i, 1);
           }
@@ -763,6 +868,7 @@
             scene.remove(c);
             coins.splice(i, 1);
             updateShopText();
+            updateMenuText();
           }
         });
 
