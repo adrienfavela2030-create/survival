@@ -5,102 +5,208 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Zombie Waves Retro</title>
   <style>
-    html, body { margin: 0; overflow: hidden; width: 100%; height: 100%; background: #05060a; font-family: "Arial Black", Arial, sans-serif; touch-action: none; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #05060a;
+      font-family: "Arial Black", Arial, sans-serif;
+      touch-action: none;
+    }
     canvas { display: block; image-rendering: pixelated; }
 
     #ui { position: fixed; inset: 0; pointer-events: none; color: #fff; }
     #hud {
-      position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.7);
-      border: 3px solid #00ff99; box-shadow: 0 0 12px rgba(0,255,153,.35);
-      padding: 10px 12px; border-radius: 8px; font-size: 14px; line-height: 1.45;
+      position: absolute; top: 10px; left: 10px;
+      background: rgba(0,0,0,.78);
+      border: 3px solid #00ff99;
+      box-shadow: 0 0 12px rgba(0,255,153,.35);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.45;
       text-shadow: 0 2px 0 #000;
     }
     #centerMsg {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: rgba(0,0,0,.8); border: 3px solid #ff4df2;
-      padding: 12px 18px; border-radius: 10px; display: none; text-align: center;
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,.85);
+      border: 3px solid #ff4df2;
+      padding: 12px 18px;
+      border-radius: 10px;
+      display: none;
+      text-align: center;
       text-shadow: 0 2px 0 #000;
+      max-width: 90vw;
     }
     #shop {
-      position: absolute; right: 10px; top: 10px; width: min(280px, calc(100vw - 20px));
-      background: rgba(0,0,0,.78); border: 3px solid #ffd54a;
-      box-shadow: 0 0 12px rgba(255,213,74,.25); padding: 12px; border-radius: 10px;
-      display: none; pointer-events: auto;
+      position: absolute; right: 10px; top: 10px;
+      width: min(280px, calc(100vw - 20px));
+      background: rgba(0,0,0,.8);
+      border: 3px solid #ffd54a;
+      box-shadow: 0 0 12px rgba(255,213,74,.25);
+      padding: 12px;
+      border-radius: 10px;
+      display: none;
+      pointer-events: auto;
     }
     #shop h3 { margin: 0 0 10px 0; color: #ffd54a; }
-    #shop button, #restartBtn, #startBtn {
-      width: 100%; margin: 6px 0; padding: 12px; border: 3px solid #000;
-      border-radius: 8px; background: linear-gradient(#ff6b6b, #cc2b2b);
-      color: #fff; font-weight: 900; letter-spacing: .5px; cursor: pointer;
+    #shop button, #startBtn {
+      width: 100%;
+      margin: 6px 0;
+      padding: 12px;
+      border: 3px solid #000;
+      border-radius: 8px;
+      background: linear-gradient(#ff6b6b, #cc2b2b);
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: .5px;
+      cursor: pointer;
       box-shadow: 0 4px 0 #7a1010;
     }
-    #shop button:hover, #restartBtn:hover, #startBtn:hover { filter: brightness(1.1); }
 
     #hotbar {
-      position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
-      display: flex; gap: 8px; pointer-events: none; flex-wrap: nowrap;
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      pointer-events: none;
     }
     .slot {
-      width: 84px; height: 48px; border: 3px solid rgba(255,255,255,.35);
-      background: rgba(0,0,0,.75); border-radius: 8px; display: flex;
-      align-items: center; justify-content: center; font-size: 12px; text-align: center;
+      width: 92px;
+      height: 50px;
+      border: 3px solid rgba(255,255,255,.35);
+      background: rgba(0,0,0,.75);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      text-align: center;
       box-shadow: 0 0 0 2px rgba(0,0,0,.4) inset;
     }
-    .slot.active { border-color: #ffea00; box-shadow: 0 0 12px rgba(255,234,0,.5); }
+    .slot.active {
+      border-color: #ffea00;
+      box-shadow: 0 0 12px rgba(255,234,0,.5);
+    }
 
     #overlay {
-      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
       background: radial-gradient(circle, rgba(33,10,60,.25), rgba(0,0,0,.92));
-      color: #fff; text-align: center;
+      color: #fff;
+      text-align: center;
+      z-index: 10;
     }
     #overlay .card {
       width: min(560px, 92vw);
-      background: rgba(0,0,0,.8); border: 4px solid #00ff99;
-      box-shadow: 0 0 22px rgba(0,255,153,.2); border-radius: 14px; padding: 22px;
+      background: rgba(0,0,0,.8);
+      border: 4px solid #00ff99;
+      box-shadow: 0 0 22px rgba(0,255,153,.2);
+      border-radius: 14px;
+      padding: 22px;
     }
     #overlay h1 { margin: 0 0 10px 0; color: #00ff99; }
     #overlay p { margin: 10px 0 18px 0; font-size: 15px; line-height: 1.5; }
 
     #touchUI {
-      position: absolute; inset: 0; display: none; pointer-events: none;
+      position: absolute;
+      inset: 0;
+      display: none;
+      pointer-events: none;
     }
     #stickBase {
-      position: absolute; left: 18px; bottom: 18px; width: 120px; height: 120px;
-      border-radius: 50%; background: rgba(0,0,0,.35); border: 4px solid rgba(255,255,255,.25);
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.35);
+      border: 4px solid rgba(255,255,255,.25);
       pointer-events: auto;
     }
     #stickKnob {
-      position: absolute; left: 36px; top: 36px; width: 48px; height: 48px;
-      border-radius: 50%; background: linear-gradient(#00e5ff, #006dff);
+      position: absolute;
+      left: 36px;
+      top: 36px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(#00e5ff, #006dff);
       border: 3px solid #000;
     }
     .touchBtn {
-      position: absolute; width: 88px; height: 88px; border-radius: 50%;
-      border: 4px solid #000; color: #fff; font-weight: 900; text-shadow: 0 2px 0 #000;
-      display: flex; align-items: center; justify-content: center;
-      pointer-events: auto; user-select: none;
+      position: absolute;
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 4px solid #000;
+      color: #fff;
+      font-weight: 900;
+      text-shadow: 0 2px 0 #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      user-select: none;
       box-shadow: 0 6px 0 rgba(0,0,0,.35);
     }
-    #attackBtn { right: 22px; bottom: 24px; background: radial-gradient(circle, #ff9b3d, #ff4a00); }
-    #shopBtn { right: 122px; bottom: 28px; width: 70px; height: 70px; background: radial-gradient(circle, #ffe56e, #d49a00); }
+    #attackBtn {
+      right: 22px;
+      bottom: 24px;
+      background: radial-gradient(circle, #ff9b3d, #ff4a00);
+    }
+    #shopBtn {
+      right: 122px;
+      bottom: 28px;
+      width: 70px;
+      height: 70px;
+      background: radial-gradient(circle, #ffe56e, #d49a00);
+    }
     #lookZone {
-      position: absolute; right: 0; top: 0; width: 55vw; height: 100vh;
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 55vw;
+      height: 100vh;
       pointer-events: auto;
+    }
+
+    .landscapeOnly {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: #fff;
+      text-align: center;
+      padding: 24px;
     }
 
     @media (max-width: 900px) {
       #touchUI { display: block; }
-      #hotbar { bottom: 110px; gap: 6px; }
-      .slot { width: 68px; height: 42px; font-size: 11px; }
     }
   </style>
 </head>
 <body>
+  <div class="landscapeOnly" id="rotateScreen">
+    <div>
+      <h1>Rotate your device</h1>
+      <p>This game is meant to be played in horizontal mode.</p>
+    </div>
+  </div>
+
   <div id="overlay">
     <div class="card">
       <h1>Zombie Waves Retro</h1>
       <p>
-        PC: WASD move, mouse look, click attack, 1-3 hotbar, B shop.<br>
+        PC: WASD move, mouse look, click attack, 1-3 hotbar, B shop, H start/restart.<br>
         Phone/iPad: joystick move, right side drag to look, tap attack/shop.
       </p>
       <button id="startBtn">Start Game</button>
@@ -122,8 +228,8 @@
 
     <div id="hotbar">
       <div class="slot active" id="slot1">1 Fists</div>
-      <div class="slot" id="slot2">2 Sword</div>
-      <div class="slot" id="slot3">3 Blaster</div>
+      <div class="slot" id="slot2">2 Empty</div>
+      <div class="slot" id="slot3">3 Empty</div>
     </div>
 
     <div id="touchUI">
@@ -144,6 +250,7 @@
     let selectedWeapon = 1;
     let yaw = 0, pitch = 0, lastHitTime = 0;
     let unlockedSword = false, unlockedGun = false;
+    let lastSpawnTime = 0;
 
     const keys = {};
     const move = { x: 0, y: 0 };
@@ -156,6 +263,7 @@
     const hud = () => document.getElementById("hud");
     const centerMsg = () => document.getElementById("centerMsg");
     const shop = () => document.getElementById("shop");
+    const rotateScreen = () => document.getElementById("rotateScreen");
 
     function zombieStats() {
       return { health: 25 + wave * 10, speed: 0.30 + wave * 0.035, damage: 6 + wave * 2 };
@@ -200,7 +308,10 @@
 
       addBorderSceneProps();
       bindEvents();
+      spawnWave();
       animate();
+      updateHotbar();
+      updateShopText();
     }
 
     function addBorderSceneProps() {
@@ -217,16 +328,12 @@
     }
 
     function bindEvents() {
-      document.getElementById("startBtn").onclick = () => {
+      const start = () => {
         document.getElementById("overlay").style.display = "none";
         startGame();
       };
-      document.getElementById("closeShop").onclick = () => toggleShop(false);
-      document.getElementById("buySword").onclick = () => buyWeapon(2, 50);
-      document.getElementById("buyGun").onclick = () => buyWeapon(3, 120);
-      document.getElementById("buyArmor").onclick = buyArmorItem;
-      document.getElementById("attackBtn").onclick = attack;
-      document.getElementById("shopBtn").onclick = () => toggleShop(!shopOpen);
+
+      document.getElementById("startBtn").onclick = start;
 
       document.addEventListener("keydown", e => {
         keys[e.key.toLowerCase()] = true;
@@ -234,7 +341,10 @@
         if (e.key === "2") setWeapon(2);
         if (e.key === "3") setWeapon(3);
         if (e.key.toLowerCase() === "b") toggleShop(!shopOpen);
-        if (e.key.toLowerCase() === "r" && gameOver) resetGame();
+        if (e.key.toLowerCase() === "h") {
+          if (!gameRunning) start();
+          else if (gameOver) resetGame();
+        }
       });
       document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
@@ -247,6 +357,15 @@
       document.addEventListener("mousedown", attack);
 
       window.addEventListener("resize", onResize);
+      window.addEventListener("orientationchange", updateOrientationUI);
+      updateOrientationUI();
+
+      document.getElementById("closeShop").onclick = () => toggleShop(false);
+      document.getElementById("buySword").onclick = () => buyWeapon(2, 50);
+      document.getElementById("buyGun").onclick = () => buyWeapon(3, 120);
+      document.getElementById("buyArmor").onclick = buyArmorItem;
+      document.getElementById("attackBtn").onclick = attack;
+      document.getElementById("shopBtn").onclick = () => toggleShop(!shopOpen);
 
       const stickBase = document.getElementById("stickBase");
       const stickKnob = document.getElementById("stickKnob");
@@ -310,6 +429,11 @@
       document.addEventListener("touchend", () => looking = false);
     }
 
+    function updateOrientationUI() {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      rotateScreen().style.display = isPortrait ? "flex" : "none";
+    }
+
     function setWeapon(id) {
       if (id === 2 && !unlockedSword) return;
       if (id === 3 && !unlockedGun) return;
@@ -318,8 +442,18 @@
     }
 
     function updateHotbar() {
+      const names = [
+        unlockedSword ? "1 Fists" : "1 Fists",
+        unlockedSword ? "2 Sword" : "2 Empty",
+        unlockedGun ? "3 Blaster" : "3 Empty"
+      ];
+      document.getElementById("slot1").textContent = names[0];
+      document.getElementById("slot2").textContent = names[1];
+      document.getElementById("slot3").textContent = names[2];
+
       ["slot1","slot2","slot3"].forEach((id, i) => {
-        document.getElementById(id).classList.toggle("active", selectedWeapon === i + 1);
+        const active = selectedWeapon === i + 1;
+        document.getElementById(id).classList.toggle("active", active);
       });
     }
 
@@ -350,6 +484,7 @@
       coinsCount -= price;
       setWeapon(id);
       updateShopText();
+      updateHotbar();
     }
 
     function buyArmorItem() {
@@ -425,7 +560,16 @@
       coins.push(coin);
       scene.add(coin);
       zombies = zombies.filter(x => !x.dead);
-      if (kills % (6 + wave * 2) === 0) nextWave();
+    }
+
+    function randomSpawnPoint() {
+      const radius = 18 + Math.random() * 22;
+      const angle = Math.random() * Math.PI * 2;
+      return new THREE.Vector3(
+        player.position.x + Math.cos(angle) * radius,
+        1,
+        player.position.z + Math.sin(angle) * radius
+      );
     }
 
     function spawnWave() {
@@ -436,9 +580,7 @@
           new THREE.BoxGeometry(1, 2, 1),
           new THREE.MeshLambertMaterial({ color: 0x55aa55 })
         );
-        const a = Math.random() * Math.PI * 2;
-        const d = 18 + Math.random() * 18;
-        m.position.set(Math.cos(a) * d, 1, Math.sin(a) * d);
+        m.position.copy(randomSpawnPoint());
         scene.add(m);
         zombies.push({ mesh: m, health: s.health, speed: s.speed, damage: s.damage, attackCd: 0, dead: false });
       }
@@ -457,7 +599,7 @@
       if (health <= 0) {
         health = 0;
         gameOver = true;
-        showCenter("YOU DIED - PRESS R", 999999);
+        showCenter("YOU DIED - PRESS H", 999999);
       }
       updateShopText();
     }
@@ -479,7 +621,6 @@
     function startGame() {
       if (gameRunning) return;
       gameRunning = true;
-      spawnWave();
       showCenter("FIGHT!");
     }
 
@@ -487,6 +628,7 @@
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
+      updateOrientationUI();
     }
 
     function animate() {
@@ -552,6 +694,11 @@
             updateShopText();
           }
         });
+
+        if (zombies.length === 0 && gameRunning && !gameOver) {
+          if (kills > 0) nextWave();
+          else spawnWave();
+        }
       }
 
       hud().innerHTML =
