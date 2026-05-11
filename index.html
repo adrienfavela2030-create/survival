@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Zombie Waves Retro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Zombie Waves Mobile</title>
   <style>
+    :root {
+      --ui-scale: 1;
+    }
+
     html, body {
       margin: 0;
       width: 100%;
@@ -13,10 +17,18 @@
       background: #05060a;
       font-family: "Arial Black", Arial, sans-serif;
       touch-action: none;
+      overscroll-behavior: none;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
     }
 
     canvas {
       display: block;
+      width: 100vw !important;
+      height: 100vh !important;
       image-rendering: pixelated;
     }
 
@@ -29,16 +41,17 @@
 
     #hud {
       position: absolute;
-      top: 14px;
-      left: 14px;
-      background: rgba(0,0,0,.78);
+      top: max(10px, env(safe-area-inset-top));
+      left: max(10px, env(safe-area-inset-left));
+      background: rgba(0,0,0,.82);
       border: 3px solid #00ff99;
       box-shadow: 0 0 12px rgba(0,255,153,.35);
-      padding: 12px 14px;
-      border-radius: 10px;
-      font-size: 16px;
-      line-height: 1.45;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.35;
       text-shadow: 0 2px 0 #000;
+      z-index: 5;
     }
 
     #centerMsg {
@@ -46,28 +59,29 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,.86);
+      background: rgba(0,0,0,.88);
       border: 3px solid #ff4df2;
       padding: 14px 20px;
-      border-radius: 12px;
+      border-radius: 14px;
       display: none;
       text-align: center;
       text-shadow: 0 2px 0 #000;
       max-width: 92vw;
       font-size: 18px;
       z-index: 8;
+      pointer-events: none;
     }
 
     #shop {
       position: absolute;
-      right: 16px;
-      top: 16px;
-      width: min(320px, calc(100vw - 32px));
-      background: rgba(0,0,0,.82);
+      right: max(12px, env(safe-area-inset-right));
+      top: max(12px, env(safe-area-inset-top));
+      width: min(340px, calc(100vw - 24px));
+      background: rgba(0,0,0,.84);
       border: 3px solid #ffd54a;
       box-shadow: 0 0 14px rgba(255,213,74,.25);
       padding: 14px;
-      border-radius: 12px;
+      border-radius: 14px;
       display: none;
       pointer-events: auto;
       z-index: 6;
@@ -84,37 +98,38 @@
       margin: 8px 0;
       padding: 14px;
       border: 3px solid #000;
-      border-radius: 10px;
+      border-radius: 12px;
       background: linear-gradient(#ff6b6b, #cc2b2b);
       color: #fff;
       font-weight: 900;
-      font-size: 16px;
-      letter-spacing: .5px;
+      font-size: 17px;
       cursor: pointer;
       box-shadow: 0 4px 0 #7a1010;
+      pointer-events: auto;
+      touch-action: manipulation;
     }
 
     #hotbar {
       position: absolute;
       left: 50%;
-      bottom: 18px;
+      bottom: max(16px, env(safe-area-inset-bottom));
       transform: translateX(-50%);
       display: flex;
-      gap: 12px;
+      gap: 10px;
       pointer-events: none;
       z-index: 5;
     }
 
     .slot {
-      width: 120px;
-      height: 64px;
+      width: 105px;
+      height: 58px;
       border: 4px solid rgba(255,255,255,.35);
-      background: rgba(0,0,0,.75);
-      border-radius: 10px;
+      background: rgba(0,0,0,.78);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 13px;
       text-align: center;
       box-shadow: 0 0 0 2px rgba(0,0,0,.4) inset;
     }
@@ -137,18 +152,18 @@
     }
 
     #overlay .card {
-      width: min(720px, 94vw);
+      width: min(760px, 94vw);
       background: rgba(0,0,0,.84);
       border: 4px solid #00ff99;
       box-shadow: 0 0 24px rgba(0,255,153,.2);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 26px;
     }
 
     #overlay h1 {
       margin: 0 0 12px 0;
       color: #00ff99;
-      font-size: 34px;
+      font-size: 36px;
     }
 
     #overlay p {
@@ -160,27 +175,27 @@
     #touchUI {
       position: absolute;
       inset: 0;
-      display: none;
+      display: block;
       pointer-events: none;
       z-index: 7;
     }
 
     #stickBase {
       position: absolute;
-      left: 24px;
-      bottom: 24px;
-      width: 160px;
-      height: 160px;
+      left: max(16px, env(safe-area-inset-left));
+      bottom: max(16px, env(safe-area-inset-bottom));
+      width: 176px;
+      height: 176px;
       border-radius: 50%;
-      background: rgba(0,0,0,.35);
-      border: 5px solid rgba(255,255,255,.25);
+      background: rgba(0,0,0,.38);
+      border: 5px solid rgba(255,255,255,.26);
       pointer-events: auto;
     }
 
     #stickKnob {
       position: absolute;
-      left: 52px;
-      top: 52px;
+      left: 60px;
+      top: 60px;
       width: 56px;
       height: 56px;
       border-radius: 50%;
@@ -190,8 +205,6 @@
 
     .touchBtn {
       position: absolute;
-      width: 110px;
-      height: 110px;
       border-radius: 50%;
       border: 5px solid #000;
       color: #fff;
@@ -204,19 +217,22 @@
       pointer-events: auto;
       user-select: none;
       box-shadow: 0 6px 0 rgba(0,0,0,.35);
+      touch-action: manipulation;
     }
 
     #attackBtn {
-      right: 28px;
-      bottom: 28px;
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      width: 118px;
+      height: 118px;
       background: radial-gradient(circle, #ff9b3d, #ff4a00);
     }
 
     #shopBtn {
-      right: 154px;
-      bottom: 40px;
-      width: 82px;
-      height: 82px;
+      right: 156px;
+      bottom: 36px;
+      width: 88px;
+      height: 88px;
       background: radial-gradient(circle, #ffe56e, #d49a00);
     }
 
@@ -224,7 +240,7 @@
       position: absolute;
       right: 0;
       top: 0;
-      width: 56vw;
+      width: 58vw;
       height: 100vh;
       pointer-events: auto;
     }
@@ -245,46 +261,33 @@
     }
 
     #rotateArrow {
-      font-size: 92px;
+      font-size: 96px;
       line-height: 1;
       color: #00ff99;
       animation: spin 1.2s linear infinite;
-      transform-origin: center;
     }
 
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
-    @media (max-width: 1100px) {
-      #touchUI { display: block; }
-    }
-
-    @media (max-width: 900px) {
-      #hud { font-size: 15px; }
-      .slot { width: 96px; height: 56px; font-size: 13px; }
-      #stickBase { width: 150px; height: 150px; }
-      #attackBtn { width: 96px; height: 96px; }
-      #shopBtn { right: 138px; }
-    }
   </style>
 </head>
 <body>
   <div id="rotateScreen">
     <div id="rotateArrow">↻</div>
-    <div style="font-size: 28px; font-weight: 900; color:#00ff99;">Rotate to landscape</div>
+    <div style="font-size: 30px; font-weight: 900; color:#00ff99;">Rotate to landscape</div>
     <div style="font-size: 18px; max-width: 520px; line-height:1.5;">
-      This game is built for horizontal play on iPhone and iPad.
+      This game is made for iPhone and iPad in horizontal mode.
     </div>
   </div>
 
   <div id="overlay">
     <div class="card">
-      <h1>Zombie Waves Retro</h1>
+      <h1>Zombie Waves Mobile</h1>
       <p>
-        PC: WASD move, mouse look, click attack, 1-3 hotbar, B shop, H start/restart.<br>
-        iPhone/iPad: joystick move, right side drag to look, tap attack/shop.
+        Tap start to play.<br>
+        Use the joystick to move, attack button to hit, and shop to buy upgrades.
       </p>
       <button id="startBtn">Start Game</button>
     </div>
@@ -319,15 +322,12 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <script>
-    let scene, camera, renderer, clock;
-    let player;
+    let scene, camera, renderer, clock, player;
     let zombies = [], bullets = [], coins = [];
     let gameRunning = false, gameOver = false, shopOpen = false;
     let wave = 1, kills = 0, coinsCount = 0, health = 100, maxHealth = 100, armor = 0;
-    let selectedWeapon = 1;
-    let yaw = 0, pitch = 0, lastHitTime = 0;
+    let selectedWeapon = 1, yaw = 0, pitch = 0, lastHitTime = 0;
     let unlockedSword = false, unlockedGun = false;
-
     const keys = {};
     const move = { x: 0, y: 0 };
 
@@ -346,187 +346,9 @@
       return { health: 25 + wave * 10, speed: 0.30 + wave * 0.035, damage: 6 + wave * 2 };
     }
 
-    function init() {
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x10131f);
-      scene.fog = new THREE.Fog(0x10131f, 18, 100);
-
-      camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
-      renderer.setSize(innerWidth, innerHeight);
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.domElement.style.imageRendering = "pixelated";
-      document.body.appendChild(renderer.domElement);
-      clock = new THREE.Clock();
-
-      const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-      dir.position.set(10, 18, 8);
-      scene.add(dir);
-      scene.add(new THREE.AmbientLight(0x8fb3ff, 0.45));
-
-      const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(500, 500),
-        new THREE.MeshLambertMaterial({ color: 0x24301f })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      scene.add(ground);
-
-      const grid = new THREE.GridHelper(500, 80, 0x00ff99, 0x223322);
-      grid.position.y = 0.01;
-      scene.add(grid);
-
-      player = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 2, 1),
-        new THREE.MeshLambertMaterial({ color: 0xf2f2f2 })
-      );
-      player.position.set(0, 1, 0);
-      scene.add(player);
-
-      addBorderSceneProps();
-      bindEvents();
-      updateOrientationUI();
-      updateHotbar();
-      updateShopText();
-      animate();
-    }
-
-    function addBorderSceneProps() {
-      for (let i = 0; i < 30; i++) {
-        const c = new THREE.Mesh(
-          new THREE.BoxGeometry(2 + Math.random() * 2, 3 + Math.random() * 5, 2 + Math.random() * 2),
-          new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.4, 0.35) })
-        );
-        const a = Math.random() * Math.PI * 2;
-        const d = 28 + Math.random() * 35;
-        c.position.set(Math.cos(a) * d, c.geometry.parameters.height / 2, Math.sin(a) * d);
-        scene.add(c);
-      }
-    }
-
-    function bindEvents() {
-      const start = () => {
-        document.getElementById("overlay").style.display = "none";
-        startGame();
-      };
-
-      document.getElementById("startBtn").addEventListener("click", start);
-
-      document.addEventListener("keydown", e => {
-        keys[e.key.toLowerCase()] = true;
-        if (e.key === "1") setWeapon(1);
-        if (e.key === "2") setWeapon(2);
-        if (e.key === "3") setWeapon(3);
-        if (e.key.toLowerCase() === "b") toggleShop(!shopOpen);
-        if (e.key.toLowerCase() === "h") {
-          if (!gameRunning) start();
-          else if (gameOver) resetGame();
-        }
-      });
-
-      document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-      document.addEventListener("mousemove", e => {
-        if (!gameRunning || shopOpen || gameOver) return;
-        yaw -= e.movementX * 0.0025;
-        pitch -= e.movementY * 0.0025;
-        pitch = Math.max(-1.05, Math.min(1.05, pitch));
-      });
-
-      document.addEventListener("mousedown", attack);
-      window.addEventListener("resize", onResize);
-      window.addEventListener("orientationchange", updateOrientationUI);
-
-      document.getElementById("closeShop").onclick = () => toggleShop(false);
-      document.getElementById("buySword").onclick = () => buyWeapon(2, 50);
-      document.getElementById("buyGun").onclick = () => buyWeapon(3, 120);
-      document.getElementById("buyArmor").onclick = buyArmorItem;
-      document.getElementById("attackBtn").onclick = attack;
-      document.getElementById("shopBtn").onclick = () => toggleShop(!shopOpen);
-
-      const stickBase = document.getElementById("stickBase");
-      const stickKnob = document.getElementById("stickKnob");
-      let tracking = false, startX = 0, startY = 0, maxR = 42;
-
-      const setKnob = (dx, dy) => {
-        const len = Math.hypot(dx, dy);
-        const clamped = Math.min(len, maxR);
-        const ang = Math.atan2(dy, dx);
-        const x = Math.cos(ang) * clamped;
-        const y = Math.sin(ang) * clamped;
-        stickKnob.style.transform = `translate(${x}px, ${y}px)`;
-        move.x = x / maxR;
-        move.y = y / maxR;
-      };
-
-      stickBase.addEventListener("touchstart", e => {
-        tracking = true;
-        const t = e.touches[0];
-        const r = stickBase.getBoundingClientRect();
-        startX = r.left + r.width / 2;
-        startY = r.top + r.height / 2;
-        setKnob(t.clientX - startX, t.clientY - startY);
-      }, { passive: false });
-
-      document.addEventListener("touchmove", e => {
-        if (!tracking) return;
-        const t = e.touches[0];
-        setKnob(t.clientX - startX, t.clientY - startY);
-        e.preventDefault();
-      }, { passive: false });
-
-      document.addEventListener("touchend", () => {
-        tracking = false;
-        move.x = 0; move.y = 0;
-        stickKnob.style.transform = "translate(0px, 0px)";
-      });
-
-      let looking = false, lastTouchX = 0, lastTouchY = 0;
-      const lookZone = document.getElementById("lookZone");
-
-      lookZone.addEventListener("touchstart", e => {
-        if (e.touches.length !== 1) return;
-        looking = true;
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
-      }, { passive: false });
-
-      document.addEventListener("touchmove", e => {
-        if (!looking || e.touches.length !== 1) return;
-        const t = e.touches[0];
-        const dx = t.clientX - lastTouchX;
-        const dy = t.clientY - lastTouchY;
-        yaw -= dx * 0.004;
-        pitch -= dy * 0.004;
-        pitch = Math.max(-1.05, Math.min(1.05, pitch));
-        lastTouchX = t.clientX;
-        lastTouchY = t.clientY;
-        e.preventDefault();
-      }, { passive: false });
-
-      document.addEventListener("touchend", () => looking = false);
-    }
-
     function updateOrientationUI() {
       const isPortrait = window.innerHeight > window.innerWidth;
       rotateScreen().style.display = isPortrait ? "flex" : "none";
-    }
-
-    function setWeapon(id) {
-      if (id === 2 && !unlockedSword) return;
-      if (id === 3 && !unlockedGun) return;
-      selectedWeapon = id;
-      updateHotbar();
-    }
-
-    function updateHotbar() {
-      document.getElementById("slot1").textContent = "1 Fists";
-      document.getElementById("slot2").textContent = unlockedSword ? "2 Sword" : "2 Empty";
-      document.getElementById("slot3").textContent = unlockedGun ? "3 Blaster" : "3 Empty";
-
-      ["slot1","slot2","slot3"].forEach((id, i) => {
-        document.getElementById(id).classList.toggle("active", selectedWeapon === i + 1);
-      });
     }
 
     function showCenter(text, time = 1400) {
@@ -536,11 +358,13 @@
       showCenter.t = setTimeout(() => centerMsg().style.display = "none", time);
     }
 
-    function toggleShop(state) {
-      if (!gameRunning || gameOver) return;
-      shopOpen = state;
-      shop().style.display = shopOpen ? "block" : "none";
-      updateShopText();
+    function updateHotbar() {
+      document.getElementById("slot1").textContent = "1 Fists";
+      document.getElementById("slot2").textContent = unlockedSword ? "2 Sword" : "2 Empty";
+      document.getElementById("slot3").textContent = unlockedGun ? "3 Blaster" : "3 Empty";
+      ["slot1","slot2","slot3"].forEach((id, i) => {
+        document.getElementById(id).classList.toggle("active", selectedWeapon === i + 1);
+      });
     }
 
     function updateShopText() {
@@ -549,12 +373,27 @@
         `Sword: ${unlockedSword ? "Owned" : "Locked"}<br>Blaster: ${unlockedGun ? "Owned" : "Locked"}`;
     }
 
+    function toggleShop(state) {
+      if (!gameRunning || gameOver) return;
+      shopOpen = state;
+      shop().style.display = shopOpen ? "block" : "none";
+      updateShopText();
+    }
+
+    function setWeapon(id) {
+      if (id === 2 && !unlockedSword) return;
+      if (id === 3 && !unlockedGun) return;
+      selectedWeapon = id;
+      updateHotbar();
+    }
+
     function buyWeapon(id, price) {
       if (coinsCount < price) return showCenter("Not enough coins");
       if (id === 2) unlockedSword = true;
       if (id === 3) unlockedGun = true;
       coinsCount -= price;
       setWeapon(id);
+      updateHotbar();
       updateShopText();
     }
 
@@ -568,69 +407,25 @@
       updateShopText();
     }
 
-    function attack() {
-      if (!gameRunning || shopOpen || gameOver) return;
-      const now = performance.now();
-      const w = weapons[selectedWeapon];
-      if (now - lastHitTime < w.cooldown) return;
-      lastHitTime = now;
-
-      if (selectedWeapon === 3) return shootBullet();
-
-      let hit = false;
-      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-      zombies.forEach(z => {
-        if (z.dead) return;
-        const dist = z.mesh.position.distanceTo(player.position);
-        if (dist < w.range + 1) {
-          const dir = new THREE.Vector3().subVectors(z.mesh.position, player.position);
-          dir.y = 0;
-          dir.normalize();
-          if (forward.dot(dir) > 0.15) {
-            damageZombie(z, w.damage);
-            hit = true;
-          }
-        }
-      });
-      if (!hit) showCenter("SWING!");
+    function startGame() {
+      if (gameRunning) return;
+      gameRunning = true;
+      showCenter("FIGHT!");
     }
 
-    function shootBullet() {
-      const bullet = new THREE.Mesh(
-        new THREE.SphereGeometry(0.12, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xfff14f })
-      );
-      bullet.position.copy(player.position);
-      bullet.position.y = 1.6;
-      const dir = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-      bullet.userData = { dir, speed: 1.25, damage: weapons[3].damage };
-      bullets.push(bullet);
-      scene.add(bullet);
-    }
-
-    function damageZombie(z, amount) {
-      z.health -= amount;
-      z.mesh.material.color.setHex(0xff3b3b);
-      setTimeout(() => { if (!z.dead) z.mesh.material.color.setHex(0x55aa55); }, 70);
-      if (z.health <= 0) killZombie(z);
-    }
-
-    function killZombie(z) {
-      z.dead = true;
-      scene.remove(z.mesh);
-      kills++;
-      const drop = 10 + Math.floor(Math.random() * 15);
-      const coin = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.18, 0.08, 10),
-        new THREE.MeshLambertMaterial({ color: 0xffd84d })
-      );
-      coin.rotation.x = Math.PI / 2;
-      coin.position.copy(z.mesh.position);
-      coin.position.y = 0.2;
-      coin.userData = { value: drop };
-      coins.push(coin);
-      scene.add(coin);
-      zombies = zombies.filter(x => !x.dead);
+    function resetGame() {
+      zombies.forEach(z => scene.remove(z.mesh));
+      bullets.forEach(b => scene.remove(b));
+      coins.forEach(c => scene.remove(c));
+      zombies = []; bullets = []; coins = [];
+      wave = 1; kills = 0; coinsCount = 0; health = 100; maxHealth = 100; armor = 0;
+      unlockedSword = false; unlockedGun = false;
+      selectedWeapon = 1; gameOver = false; shopOpen = false;
+      document.getElementById("shop").style.display = "none";
+      updateHotbar();
+      updateShopText();
+      spawnWave();
+      showCenter("RESTARTED");
     }
 
     function randomSpawnPoint() {
@@ -670,29 +465,234 @@
       if (health <= 0) {
         health = 0;
         gameOver = true;
-        showCenter("YOU DIED - PRESS H", 999999);
+        showCenter("YOU DIED - TAP START TO RESTART", 999999);
       }
       updateShopText();
     }
 
-    function resetGame() {
-      zombies.forEach(z => scene.remove(z.mesh));
-      bullets.forEach(b => scene.remove(b));
-      coins.forEach(c => scene.remove(c));
-      zombies = []; bullets = []; coins = [];
-      wave = 1; kills = 0; coinsCount = 0; health = 100; maxHealth = 100; armor = 0;
-      unlockedSword = false; unlockedGun = false;
-      selectedWeapon = 1; gameOver = false; shopOpen = false;
-      toggleShop(false);
-      updateHotbar();
-      spawnWave();
-      showCenter("RESTARTED");
+    function damageZombie(z, amount) {
+      z.health -= amount;
+      z.mesh.material.color.setHex(0xff3b3b);
+      setTimeout(() => { if (!z.dead) z.mesh.material.color.setHex(0x55aa55); }, 70);
+      if (z.health <= 0) killZombie(z);
     }
 
-    function startGame() {
-      if (gameRunning) return;
-      gameRunning = true;
-      showCenter("FIGHT!");
+    function killZombie(z) {
+      z.dead = true;
+      scene.remove(z.mesh);
+      kills++;
+      const drop = 10 + Math.floor(Math.random() * 15);
+      const coin = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.18, 0.08, 10),
+        new THREE.MeshLambertMaterial({ color: 0xffd84d })
+      );
+      coin.rotation.x = Math.PI / 2;
+      coin.position.copy(z.mesh.position);
+      coin.position.y = 0.2;
+      coin.userData = { value: drop };
+      coins.push(coin);
+      scene.add(coin);
+      zombies = zombies.filter(x => !x.dead);
+    }
+
+    function attack() {
+      if (!gameRunning || shopOpen || gameOver) return;
+      const now = performance.now();
+      const w = weapons[selectedWeapon];
+      if (now - lastHitTime < w.cooldown) return;
+      lastHitTime = now;
+
+      if (selectedWeapon === 3) return shootBullet();
+
+      let hit = false;
+      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+      zombies.forEach(z => {
+        if (z.dead) return;
+        const dist = z.mesh.position.distanceTo(player.position);
+        if (dist < w.range + 1) {
+          const dir = new THREE.Vector3().subVectors(z.mesh.position, player.position);
+          dir.y = 0;
+          dir.normalize();
+          if (forward.dot(dir) > 0.15) {
+            damageZombie(z, w.damage);
+            hit = true;
+          }
+        }
+      });
+      if (!hit) showCenter("SWING!");
+    }
+
+    function shootBullet() {
+      const bullet = new THREE.Mesh(
+        new THREE.SphereGeometry(0.12, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xfff14f })
+      );
+      bullet.position.copy(player.position);
+      bullet.position.y = 1.6;
+      bullet.userData = { dir: new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)), speed: 1.25, damage: weapons[3].damage };
+      bullets.push(bullet);
+      scene.add(bullet);
+    }
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x10131f);
+      scene.fog = new THREE.Fog(0x10131f, 18, 100);
+
+      camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.domElement.style.width = "100vw";
+      renderer.domElement.style.height = "100vh";
+      renderer.domElement.style.imageRendering = "pixelated";
+      document.body.appendChild(renderer.domElement);
+      clock = new THREE.Clock();
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.2);
+      light.position.set(10, 18, 8);
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0x8fb3ff, 0.45));
+
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(500, 500),
+        new THREE.MeshLambertMaterial({ color: 0x24301f })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+
+      const grid = new THREE.GridHelper(500, 80, 0x00ff99, 0x223322);
+      grid.position.y = 0.01;
+      scene.add(grid);
+
+      player = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2, 1),
+        new THREE.MeshLambertMaterial({ color: 0xf2f2f2 })
+      );
+      player.position.set(0, 1, 0);
+      scene.add(player);
+
+      for (let i = 0; i < 20; i++) {
+        const c = new THREE.Mesh(
+          new THREE.BoxGeometry(2 + Math.random() * 2, 3 + Math.random() * 5, 2 + Math.random() * 2),
+          new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.4, 0.35) })
+        );
+        const a = Math.random() * Math.PI * 2;
+        const d = 28 + Math.random() * 35;
+        c.position.set(Math.cos(a) * d, c.geometry.parameters.height / 2, Math.sin(a) * d);
+        scene.add(c);
+      }
+
+      bindEvents();
+      updateOrientationUI();
+      updateHotbar();
+      updateShopText();
+      animate();
+    }
+
+    function bindEvents() {
+      const startButton = document.getElementById("startBtn");
+      const startHandler = (e) => {
+        e.preventDefault();
+        document.getElementById("overlay").style.display = "none";
+        startGame();
+      };
+      startButton.addEventListener("pointerdown", startHandler);
+      startButton.addEventListener("touchstart", startHandler, { passive: false });
+      startButton.addEventListener("click", startHandler);
+
+      document.addEventListener("keydown", e => {
+        keys[e.key.toLowerCase()] = true;
+        if (e.key === "1") setWeapon(1);
+        if (e.key === "2") setWeapon(2);
+        if (e.key === "3") setWeapon(3);
+        if (e.key.toLowerCase() === "b") toggleShop(!shopOpen);
+        if (e.key.toLowerCase() === "h") {
+          if (!gameRunning) startGame();
+          else if (gameOver) resetGame();
+        }
+      });
+      document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+      document.addEventListener("mousemove", e => {
+        if (!gameRunning || shopOpen || gameOver) return;
+        yaw -= e.movementX * 0.0025;
+        pitch -= e.movementY * 0.0025;
+        pitch = Math.max(-1.05, Math.min(1.05, pitch));
+      });
+      document.addEventListener("mousedown", attack);
+
+      window.addEventListener("resize", onResize);
+      window.addEventListener("orientationchange", updateOrientationUI);
+
+      document.getElementById("closeShop").onclick = () => toggleShop(false);
+      document.getElementById("buySword").onclick = () => buyWeapon(2, 50);
+      document.getElementById("buyGun").onclick = () => buyWeapon(3, 120);
+      document.getElementById("buyArmor").onclick = buyArmorItem;
+      document.getElementById("attackBtn").onclick = attack;
+      document.getElementById("shopBtn").onclick = () => toggleShop(!shopOpen);
+
+      const stickBase = document.getElementById("stickBase");
+      const stickKnob = document.getElementById("stickKnob");
+      let tracking = false, startX = 0, startY = 0, maxR = 46;
+
+      const setKnob = (dx, dy) => {
+        const len = Math.hypot(dx, dy);
+        const clamped = Math.min(len, maxR);
+        const ang = Math.atan2(dy, dx);
+        const x = Math.cos(ang) * clamped;
+        const y = Math.sin(ang) * clamped;
+        stickKnob.style.transform = `translate(${x}px, ${y}px)`;
+        move.x = x / maxR;
+        move.y = y / maxR;
+      };
+
+      stickBase.addEventListener("touchstart", e => {
+        tracking = true;
+        const t = e.touches[0];
+        const r = stickBase.getBoundingClientRect();
+        startX = r.left + r.width / 2;
+        startY = r.top + r.height / 2;
+        setKnob(t.clientX - startX, t.clientY - startY);
+      }, { passive: false });
+
+      document.addEventListener("touchmove", e => {
+        if (!tracking) return;
+        const t = e.touches[0];
+        setKnob(t.clientX - startX, t.clientY - startY);
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener("touchend", () => {
+        tracking = false;
+        move.x = 0;
+        move.y = 0;
+        stickKnob.style.transform = "translate(0px, 0px)";
+      });
+
+      let looking = false, lastTouchX = 0, lastTouchY = 0;
+      document.getElementById("lookZone").addEventListener("touchstart", e => {
+        if (e.touches.length !== 1) return;
+        looking = true;
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+      }, { passive: false });
+
+      document.addEventListener("touchmove", e => {
+        if (!looking || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        const dx = t.clientX - lastTouchX;
+        const dy = t.clientY - lastTouchY;
+        yaw -= dx * 0.004;
+        pitch -= dy * 0.004;
+        pitch = Math.max(-1.05, Math.min(1.05, pitch));
+        lastTouchX = t.clientX;
+        lastTouchY = t.clientY;
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener("touchend", () => looking = false);
     }
 
     function onResize() {
